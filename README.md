@@ -20,9 +20,9 @@ The bot requires the following permissions in your server:
 - **Manage Roles** to assign and remove roles from members
 - **Send Messages** to post role panels in channels
 - **Read Message History** to fetch and update existing panels
-- **Manage Webhooks** to create and manage the webhook used to post panels
-- **Manage Messages** to delete the original panel when webhook identity changes
 - **View Channels** to access channels where panels are posted
+- **Manage Webhooks** if you want to post panels with custom webhook identities (optional)
+- **Manage Messages** to delete the original panel when webhook identity changes (optional)
 
 The bot's role must be positioned **above** any role it needs to assign in the server's role hierarchy.
 
