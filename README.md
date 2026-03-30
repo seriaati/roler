@@ -5,47 +5,13 @@
 
 Discord bot for easy and descriptive role management.
 
+[>> Click to invite <<](https://discord.com/oauth2/authorize?client_id=1488089368924000367)
+
 ## Overview
 
 Roler lets server admins write a simple markup template in any message, then turn it into a persistent role panel with clickable buttons. Members click a button to get (or lose) a role.
 
 The special thing about Roler is its components v2 usage and flexible template system. You can create beautiful role panels mixing text messages (with markdown support) with buttons.
-
-## Setup
-
-### Requirements
-
-- Python 3.14+
-- PostgreSQL
-
-### Environment variables
-
-Create a `.env` file in the project root:
-
-```env
-DISCORD_TOKEN=your_bot_token
-ENV=prod
-
-POSTGRES_PASSWORD=your_password
-POSTGRES_DB=roler
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_USER=postgres
-```
-
-### Running locally
-
-```bash
-uv sync
-uv run main.py
-```
-
-### Running with Docker
-
-```bash
-docker build -t roler .
-docker run --env-file .env roler
-```
 
 ## Bot permissions
 
@@ -160,3 +126,39 @@ The bot will reject a template and show an error if:
 - A button has neither a label nor an `emoji`
 - A row contains more than **5 buttons**
 - The template contains more than **5 rows**
+
+## Self-Hosting
+
+### Requirements
+
+- Python 3.14+
+- PostgreSQL
+
+### Environment variables
+
+Create a `.env` file in the project root:
+
+```env
+DISCORD_TOKEN=your_bot_token
+ENV=prod
+
+POSTGRES_PASSWORD=your_password
+POSTGRES_DB=roler
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=postgres
+```
+
+### Running locally
+
+```bash
+uv sync
+uv run main.py
+```
+
+### Running with Docker
+
+```bash
+docker build -t roler .
+docker run --env-file .env roler
+```
