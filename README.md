@@ -109,7 +109,7 @@ All attributes:
 
 #### Webhook identity syntax
 
-By default, panels are posted by a webhook named **Roler** using the bot's avatar. You can override this per-template with the optional `[webhook]` tag:
+By default, panels are posted by the bot. However, you can customize the profile avatar and name of the poster by providing the `[webhook]` tag:
 
 ```
 [webhook name=ServerName avatar=https://example.com/avatar.png]
