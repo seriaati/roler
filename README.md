@@ -44,13 +44,38 @@ All attributes:
 | `role` | ✅ | Discord role ID (snowflake) | — | The role to assign/remove |
 | `color` | ❌ | `blurple` `green` `red` `grey` | `blurple` | Button color |
 | `mode` | ❌ | `toggle` `add` `remove` | `toggle` | How the role is applied |
-| `emoji` | ❌ | Unicode emoji or Discord emoji | — | Emoji shown on the button |
+| `emoji` | ❌ | Unicode emoji or custom Discord emoji | — | Emoji shown on the button |
 
 **Modes:**
 
 - `toggle` adds the role if the member doesn't have it, removes it if they do
 - `add` always adds the role
 - `remove` always removes the role
+
+#### Custom Discord emojis
+
+To use a custom emoji from your server (or any server the bot is in), paste the emoji's raw mention string as the `emoji` value:
+
+```
+emoji=<:emoji_name:emoji_id>
+```
+
+For animated custom emojis, prefix with `a`:
+
+```
+emoji=<a:emoji_name:emoji_id>
+```
+
+To get the raw string, type `\:emoji_name:` in Discord and send it, the message will show the full `<:name:id>` format. Copy that and use it as the attribute value.
+
+Example:
+
+```
+[button role=1351855807167463424 emoji=<:pepe:1234567890123456789>]Pepe[/button]
+[button role=1475117545122959380 emoji=<a:dance:9876543210987654321>]Dance[/button]
+```
+
+> The bot must be in a server that has access to the emoji, or the emoji must be from a server the bot shares with the user.
 
 #### Rows
 
