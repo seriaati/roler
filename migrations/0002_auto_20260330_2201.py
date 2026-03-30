@@ -1,31 +1,27 @@
 from tortoise import migrations
 from tortoise.migrations import operations as ops
-from tortoise import fields
+
 
 class Migration(migrations.Migration):
-    dependencies = [('models', '0001_initial')]
+    dependencies = [("models", "0001_initial")]
 
     initial = False
 
     operations = [
-        ops.AddField(
-            model_name='RolePanel',
-            name='webhook_avatar_url',
-            field=fields.CharField(null=True, max_length=2048),
+        ops.RunSQL(
+            sql='ALTER TABLE "role_panels" ADD COLUMN IF NOT EXISTS "webhook_avatar_url" VARCHAR(2048) NULL;',
+            reverse_sql='ALTER TABLE "role_panels" DROP COLUMN IF EXISTS "webhook_avatar_url";',
         ),
-        ops.AddField(
-            model_name='RolePanel',
-            name='webhook_id',
-            field=fields.BigIntField(null=True),
+        ops.RunSQL(
+            sql='ALTER TABLE "role_panels" ADD COLUMN IF NOT EXISTS "webhook_id" BIGINT NULL;',
+            reverse_sql='ALTER TABLE "role_panels" DROP COLUMN IF EXISTS "webhook_id";',
         ),
-        ops.AddField(
-            model_name='RolePanel',
-            name='webhook_name',
-            field=fields.CharField(null=True, max_length=80),
+        ops.RunSQL(
+            sql='ALTER TABLE "role_panels" ADD COLUMN IF NOT EXISTS "webhook_name" VARCHAR(80) NULL;',
+            reverse_sql='ALTER TABLE "role_panels" DROP COLUMN IF EXISTS "webhook_name";',
         ),
-        ops.AddField(
-            model_name='RolePanel',
-            name='webhook_token',
-            field=fields.CharField(null=True, max_length=200),
+        ops.RunSQL(
+            sql='ALTER TABLE "role_panels" ADD COLUMN IF NOT EXISTS "webhook_token" VARCHAR(200) NULL;',
+            reverse_sql='ALTER TABLE "role_panels" DROP COLUMN IF EXISTS "webhook_token";',
         ),
     ]
