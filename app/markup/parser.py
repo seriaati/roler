@@ -1,0 +1,100 @@
+from __future__ import annotations
+
+import re
+from typing import TYPE_CHECKING
+
+from app.markup.nodes import ActionRowGroup, ButtonNode, TextNode
+
+if TYPE_CHECKING:
+    from app.markup.nodes import ParsedTemplate
+
+_CODE_BLOCK_RE = re.compile(r"```[^\n]*\n?(.*?)```", re.DOTALL)
+_FENCE_LINE_RE = re.compile(r"^```[^\n]*$", re.MULTILINE)
+
+_BUTTON_TAG_RE = re.compile(
+    r"\[button(?P<attrs>(?:\s+[a-z]+=\S+)*)\s*\](?P<label>[^\[]*)\[/button\]", re.IGNORECASE
+)
+_ATTR_RE = re.compile(r"([a-z]+)=(\S+)", re.IGNORECASE)
+
+_VALID_COLORS = {"blurple", "green", "red", "grey"}
+_VALID_MODES = {"toggle", "add", "remove"}
+
+
+def _parse_button(attrs_str: str, label_text: str) -> ButtonNode:
+    attrs: dict[str, str] = dict(_ATTR_RE.findall(attrs_str))
+
+    role_id_str = attrs.get("role", "")
+    role_id = int(role_id_str) if role_id_str.isdigit() else 0
+
+    label = label_text.strip() or None
+    emoji = attrs.get("emoji") or None
+    color = attrs.get("color", "blurple").lower()
+    mode = attrs.get("mode", "toggle").lower()
+
+    if color not in _VALID_COLORS:
+        color = "blurple"
+    if mode not in _VALID_MODES:
+        mode = "toggle"
+
+    return ButtonNode(role_id=role_id, label=label, emoji=emoji, color=color, mode=mode)
+
+
+def _parse_button_block(block: str) -> ActionRowGroup | None:
+    lines = [line for line in block.splitlines() if line.strip()]
+    buttons: list[ButtonNode] = [
+        _parse_button(m.group("attrs"), m.group("label"))
+        for line in lines
+        for m in _BUTTON_TAG_RE.finditer(line)
+    ]
+    if not buttons:
+        return None
+    return ActionRowGroup(buttons=buttons)
+
+
+def _process_button_block(stripped: str, result: list) -> None:
+    lines = stripped.splitlines()
+    current_row_lines: list[str] = []
+
+    for line in lines:
+        if "[button" in line.lower():
+            current_row_lines.append(line)
+        else:
+            if current_row_lines:
+                row = _parse_button_block("\n".join(current_row_lines))
+                if row:
+                    result.append(row)
+                current_row_lines = []
+            if line.strip():
+                result.append(TextNode(content=line.strip()))
+
+    if current_row_lines:
+        row = _parse_button_block("\n".join(current_row_lines))
+        if row:
+            result.append(row)
+
+
+def _extract_code_blocks(source: str) -> str:
+    matches = _CODE_BLOCK_RE.findall(source)
+    if matches:
+        return "\n".join(m.strip() for m in matches)
+    if _FENCE_LINE_RE.search(source):
+        return _FENCE_LINE_RE.sub("", source).strip()
+    return source
+
+
+def parse_template(source: str) -> ParsedTemplate:
+    source = _extract_code_blocks(source)
+    blocks = re.split(r"\n{2,}", source)
+    result: list[TextNode | ActionRowGroup] = []
+
+    for block in blocks:
+        stripped = block.strip()
+        if not stripped:
+            continue
+
+        if "[button" in stripped.lower():
+            _process_button_block(stripped, result)
+        else:
+            result.append(TextNode(content=stripped))
+
+    return result
