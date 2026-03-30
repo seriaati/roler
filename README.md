@@ -1,9 +1,9 @@
-# Roler
-
 ![Banner](images/BannerWithLogo.png)
 ![Showcase](images/Showcase.png)
 
-Discord bot for easy and descriptive role management via interactive button panels.
+# Roler
+
+Discord bot for easy and descriptive role management.
 
 ## Overview
 
