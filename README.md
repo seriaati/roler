@@ -11,7 +11,14 @@ Discord bot for easy and descriptive role management.
 
 Roler lets server admins write a simple markup template in any message, then turn it into a persistent role panel with clickable buttons. Members click a button to get (or lose) a role.
 
-The special thing about Roler is its components v2 usage and flexible template system. You can create beautiful role panels mixing text messages (with markdown support) with buttons.
+## Why is this better?
+
+- Components v2: Create beautiful role panels that look far more superior than Embeds. Mix markdown texts, emojis, buttons, and separators in any order to create a consistent, visually appealing look.
+- Customizability: Change button colors, emojis, and even webhook identities for posting panels.
+- Easy edits: Do inline edits for existing role panels without having to reconstruct everything from scratch.
+- Version control: Keep old versions of your panel templates in message history and revert to them whenever you want.
+- Portability: Move panels around different channels without having to redo the setup.
+- Shareability: Use the same template to create the same panels across different servers or share them with others.
 
 ## Bot permissions
 
