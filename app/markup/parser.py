@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
-from app.markup.nodes import ActionRowGroup, ButtonNode, TextNode
+from app.markup.nodes import ActionRowGroup, ButtonNode, SeparatorNode, TextNode
 
 if TYPE_CHECKING:
     from app.markup.nodes import ParsedTemplate
@@ -14,10 +14,12 @@ _FENCE_LINE_RE = re.compile(r"^```[^\n]*$", re.MULTILINE)
 _BUTTON_TAG_RE = re.compile(
     r"\[button(?P<attrs>(?:\s+[a-z]+=\S+)*)\s*\](?P<label>[^\[]*)\[/button\]", re.IGNORECASE
 )
+_SEPARATOR_TAG_RE = re.compile(r"\[separator(?P<attrs>(?:\s+[a-z]+=\S+)*)\s*\]", re.IGNORECASE)
 _ATTR_RE = re.compile(r"([a-z]+)=(\S+)", re.IGNORECASE)
 
 _VALID_COLORS = {"blurple", "green", "red", "grey"}
 _VALID_MODES = {"toggle", "add", "remove"}
+_VALID_SIZES = {"small", "large"}
 
 
 def _parse_button(attrs_str: str, label_text: str) -> ButtonNode:
@@ -39,6 +41,19 @@ def _parse_button(attrs_str: str, label_text: str) -> ButtonNode:
     return ButtonNode(role_id=role_id, label=label, emoji=emoji, color=color, mode=mode)
 
 
+def _parse_separator(attrs_str: str) -> SeparatorNode:
+    attrs: dict[str, str] = dict(_ATTR_RE.findall(attrs_str))
+
+    size = attrs.get("size", "large").lower()
+    if size not in _VALID_SIZES:
+        size = "small"
+
+    visible_str = attrs.get("visible", "true").lower()
+    visible = visible_str != "false"
+
+    return SeparatorNode(size=size, visible=visible)
+
+
 def _parse_button_block(block: str) -> ActionRowGroup | None:
     lines = [line for line in block.splitlines() if line.strip()]
     buttons: list[ButtonNode] = [
@@ -51,12 +66,15 @@ def _parse_button_block(block: str) -> ActionRowGroup | None:
     return ActionRowGroup(buttons=buttons)
 
 
-def _process_button_block(stripped: str, result: list) -> None:
+def _process_mixed_block(
+    stripped: str, result: list[TextNode | ActionRowGroup | SeparatorNode]
+) -> None:
     lines = stripped.splitlines()
     current_row_lines: list[str] = []
 
     for line in lines:
-        if "[button" in line.lower():
+        line_lower = line.lower()
+        if "[button" in line_lower:
             current_row_lines.append(line)
         else:
             if current_row_lines:
@@ -64,7 +82,11 @@ def _process_button_block(stripped: str, result: list) -> None:
                 if row:
                     result.append(row)
                 current_row_lines = []
-            if line.strip():
+            if line.strip() == "---":
+                result.append(SeparatorNode(size="large", visible=True))
+            elif sep_match := _SEPARATOR_TAG_RE.search(line):
+                result.append(_parse_separator(sep_match.group("attrs")))
+            elif line.strip():
                 result.append(TextNode(content=line.strip()))
 
     if current_row_lines:
@@ -85,15 +107,17 @@ def _extract_code_blocks(source: str) -> str:
 def parse_template(source: str) -> ParsedTemplate:
     source = _extract_code_blocks(source)
     blocks = re.split(r"\n{2,}", source)
-    result: list[TextNode | ActionRowGroup] = []
+    result: list[TextNode | ActionRowGroup | SeparatorNode] = []
 
     for block in blocks:
         stripped = block.strip()
         if not stripped:
             continue
 
-        if "[button" in stripped.lower():
-            _process_button_block(stripped, result)
+        if stripped == "---":
+            result.append(SeparatorNode(size="large", visible=True))
+        elif "[button" in stripped.lower() or "[separator" in stripped.lower():
+            _process_mixed_block(stripped, result)
         else:
             result.append(TextNode(content=stripped))
 

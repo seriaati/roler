@@ -22,4 +22,10 @@ class ActionRowGroup:
     buttons: list[ButtonNode] = field(default_factory=list)
 
 
-ParsedTemplate = list[TextNode | ActionRowGroup]
+@dataclass
+class SeparatorNode:
+    size: str = "small"
+    visible: bool = True
+
+
+ParsedTemplate = list[TextNode | ActionRowGroup | SeparatorNode]

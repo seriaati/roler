@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import discord
 
-from app.markup.nodes import TextNode
+from app.markup.nodes import SeparatorNode, TextNode
 
 if TYPE_CHECKING:
     from app.markup.nodes import ParsedTemplate
@@ -15,6 +15,11 @@ _COLOR_MAP: dict[str, discord.ButtonStyle] = {
     "green": discord.ButtonStyle.green,
     "red": discord.ButtonStyle.red,
     "grey": discord.ButtonStyle.grey,
+}
+
+_SPACING_MAP: dict[str, discord.SeparatorSpacing] = {
+    "small": discord.SeparatorSpacing.small,
+    "large": discord.SeparatorSpacing.large,
 }
 
 _CUSTOM_EMOJI_RE = re.compile(r"<(?P<animated>a)?:(?P<name>[^:]+):(?P<id>\d+)>")
@@ -35,6 +40,9 @@ def render(template: ParsedTemplate) -> discord.ui.LayoutView:
     for node in template:
         if isinstance(node, TextNode):
             view.add_item(discord.ui.TextDisplay(node.content))
+        elif isinstance(node, SeparatorNode):
+            spacing = _SPACING_MAP.get(node.size, discord.SeparatorSpacing.small)
+            view.add_item(discord.ui.Separator(spacing=spacing, visible=node.visible))
         else:
             row = discord.ui.ActionRow()
             for btn in node.buttons:

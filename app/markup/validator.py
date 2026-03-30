@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from app.markup.nodes import ActionRowGroup
+from app.markup.nodes import ActionRowGroup, SeparatorNode
 
 if TYPE_CHECKING:
     from app.markup.nodes import ParsedTemplate
 
 _VALID_COLORS = {"blurple", "green", "red", "grey"}
 _VALID_MODES = {"toggle", "add", "remove"}
+_VALID_SIZES = {"small", "large"}
 _MIN_SNOWFLAKE = 10**17
 _MAX_SNOWFLAKE = 10**19
 
@@ -21,11 +22,19 @@ def validate(template: ParsedTemplate) -> list[str]:
     if len(action_rows) > 5:
         errors.append(f"Too many button rows ({len(action_rows)}), max is 5")
 
+    seen_role_ids: set[int] = set()
     for row_idx, row in enumerate(action_rows, start=1):
         if len(row.buttons) > 5:
             errors.append(f"Row {row_idx} has {len(row.buttons)} buttons, max is 5")
 
         for btn in row.buttons:
+            if btn.role_id and btn.role_id in seen_role_ids:
+                errors.append(
+                    f"Row {row_idx}: role ID {btn.role_id} is already used by another button"
+                )
+            else:
+                seen_role_ids.add(btn.role_id)
+
             if not btn.role_id or not (_MIN_SNOWFLAKE <= btn.role_id <= _MAX_SNOWFLAKE):
                 errors.append(
                     f"Row {row_idx}: button has an invalid or missing role ID ({btn.role_id!r})"
@@ -45,5 +54,11 @@ def validate(template: ParsedTemplate) -> list[str]:
                 errors.append(
                     f"Row {row_idx}: button for role {btn.role_id} has invalid mode {btn.mode!r}"
                 )
+
+    for sep_idx, sep in enumerate(
+        (node for node in template if isinstance(node, SeparatorNode)), start=1
+    ):
+        if sep.size not in _VALID_SIZES:
+            errors.append(f"Separator {sep_idx} has invalid size {sep.size!r}")
 
     return errors
