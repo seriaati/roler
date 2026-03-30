@@ -37,7 +37,7 @@ def _parse_emoji(emoji_str: str) -> discord.PartialEmoji | str:
 def render(template: ParsedTemplate) -> discord.ui.LayoutView:
     view = discord.ui.LayoutView()
 
-    for node in template:
+    for node in template.nodes:
         if isinstance(node, TextNode):
             view.add_item(discord.ui.TextDisplay(node.content))
         elif isinstance(node, SeparatorNode):

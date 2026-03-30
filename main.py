@@ -1,7 +1,7 @@
 import asyncio
 import contextlib
 
-from app.core.bot import Roller
+from app.core.bot import Roler
 from app.core.settings import SETTINGS
 from app.db.conn import Database
 from app.utils.logging import setup_logging
@@ -11,7 +11,7 @@ async def main() -> None:
     setup_logging()
 
     with contextlib.suppress(KeyboardInterrupt, asyncio.CancelledError):
-        async with Database(), Roller() as bot:
+        async with Database(), Roler() as bot:
             await bot.start(token=SETTINGS.discord_token)
 
 

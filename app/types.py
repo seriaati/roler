@@ -1,5 +1,5 @@
 import discord
 
-from app.core.bot import Roller
+from app.core.bot import Roler
 
-type Interaction = discord.Interaction[Roller]
+type Interaction = discord.Interaction[Roler]

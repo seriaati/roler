@@ -20,6 +20,9 @@ The bot requires the following permissions in your server:
 - **Manage Roles** to assign and remove roles from members
 - **Send Messages** to post role panels in channels
 - **Read Message History** to fetch and update existing panels
+- **Manage Webhooks** to create and manage the webhook used to post panels
+- **Manage Messages** to delete the original panel when webhook identity changes
+- **View Channels** to access channels where panels are posted
 
 The bot's role must be positioned **above** any role it needs to assign in the server's role hierarchy.
 
@@ -104,9 +107,28 @@ All attributes:
 | `size` | ❌ | `small` `large` | `large` | Spacing size of the separator |
 | `visible` | ❌ | `true` `false` | `true` | Whether the divider line is visible |
 
+#### Webhook identity syntax
+
+By default, panels are posted by a webhook named **Roler** using the bot's avatar. You can override this per-template with the optional `[webhook]` tag:
+
+```
+[webhook name=ServerName avatar=https://example.com/avatar.png]
+```
+
+Place it anywhere in the template (it is not rendered as part of the panel). Both attributes are optional — omit either to keep the bot's default.
+
+| Attribute | Required | Description |
+|-----------|----------|-------------|
+| `name` | ❌ | Display name shown on the panel message (1–80 characters) |
+| `avatar` | ❌ | Avatar URL shown on the panel message (must be `http://` or `https://`) |
+
+> If you later edit the template and change the `name` or `avatar`, the bot will automatically delete the old panel message and re-send it with the new identity.
+
 ### 2. Example template
 
 ```
+[webhook name=MyServer avatar=https://example.com/server-icon.png]
+
 # Welcome to role picker
 ## 🎨 Pick your color roles
 
@@ -151,6 +173,8 @@ The bot will reject a template and show an error if:
 - A button has neither a label nor an `emoji`
 - A row contains more than **5 buttons**
 - The template contains more than **5 rows**
+- The `[webhook]` `name` is not between 1 and 80 characters
+- The `[webhook]` `avatar` is not a valid HTTP(S) URL
 
 ## Self-Hosting
 

@@ -28,4 +28,14 @@ class SeparatorNode:
     visible: bool = True
 
 
-ParsedTemplate = list[TextNode | ActionRowGroup | SeparatorNode]
+@dataclass
+class WebhookConfig:
+    name: str | None = None
+    avatar_url: str | None = None
+    present: bool = False
+
+
+@dataclass
+class ParsedTemplate:
+    nodes: list[TextNode | ActionRowGroup | SeparatorNode] = field(default_factory=list)
+    webhook: WebhookConfig = field(default_factory=WebhookConfig)

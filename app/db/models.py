@@ -17,6 +17,10 @@ class RolePanel(Model):
     target_message_id = fields.BigIntField(unique=True)
     created_by = fields.BigIntField()
     created_at = fields.DatetimeField(auto_now_add=True)
+    webhook_id = fields.BigIntField(null=True)
+    webhook_token = fields.CharField(max_length=200, null=True)
+    webhook_name = fields.CharField(max_length=80, null=True)
+    webhook_avatar_url = fields.CharField(max_length=2048, null=True)
 
     class Meta:
         table = "role_panels"

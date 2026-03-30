@@ -22,14 +22,11 @@ class RolePanelButton(
 
     @classmethod
     async def from_custom_id(
-        cls,
-        interaction: discord.Interaction,  # noqa: ARG003
-        item: discord.ui.Button,  # noqa: ARG003
-        match: re.Match[str],
+        cls, _i: discord.Interaction, _item: discord.ui.Button, match: re.Match[str]
     ) -> RolePanelButton:
         return cls(mode=match["mode"], role_id=int(match["role_id"]))
 
-    async def callback(self, interaction: Interaction) -> None:  # type: ignore[override]
+    async def callback(self, interaction: Interaction) -> None:
         if not interaction.guild:
             await interaction.response.send_message(
                 "This button can only be used in a server.", ephemeral=True

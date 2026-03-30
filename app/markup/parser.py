@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
 
-from app.markup.nodes import ActionRowGroup, ButtonNode, SeparatorNode, TextNode
-
-if TYPE_CHECKING:
-    from app.markup.nodes import ParsedTemplate
+from app.markup.nodes import (
+    ActionRowGroup,
+    ButtonNode,
+    ParsedTemplate,
+    SeparatorNode,
+    TextNode,
+    WebhookConfig,
+)
 
 _CODE_BLOCK_RE = re.compile(r"```[^\n]*\n?(.*?)```", re.DOTALL)
 _FENCE_LINE_RE = re.compile(r"^```[^\n]*$", re.MULTILINE)
@@ -15,6 +18,7 @@ _BUTTON_TAG_RE = re.compile(
     r"\[button(?P<attrs>(?:\s+[a-z]+=\S+)*)\s*\](?P<label>[^\[]*)\[/button\]", re.IGNORECASE
 )
 _SEPARATOR_TAG_RE = re.compile(r"\[separator(?P<attrs>(?:\s+[a-z]+=\S+)*)\s*\]", re.IGNORECASE)
+_WEBHOOK_TAG_RE = re.compile(r"\[webhook(?P<attrs>(?:\s+[a-z]+=\S+)*)\s*\]", re.IGNORECASE)
 _ATTR_RE = re.compile(r"([a-z]+)=(\S+)", re.IGNORECASE)
 
 _VALID_COLORS = {"blurple", "green", "red", "grey"}
@@ -52,6 +56,13 @@ def _parse_separator(attrs_str: str) -> SeparatorNode:
     visible = visible_str != "false"
 
     return SeparatorNode(size=size, visible=visible)
+
+
+def _parse_webhook(attrs_str: str) -> WebhookConfig:
+    attrs: dict[str, str] = dict(_ATTR_RE.findall(attrs_str))
+    return WebhookConfig(
+        name=attrs.get("name") or None, avatar_url=attrs.get("avatar") or None, present=True
+    )
 
 
 def _parse_button_block(block: str) -> ActionRowGroup | None:
@@ -104,10 +115,21 @@ def _extract_code_blocks(source: str) -> str:
     return source
 
 
+def _extract_webhook_config(source: str) -> tuple[str, WebhookConfig]:
+    m = _WEBHOOK_TAG_RE.search(source)
+    if not m:
+        return source, WebhookConfig()
+    webhook = _parse_webhook(m.group("attrs"))
+    cleaned = _WEBHOOK_TAG_RE.sub("", source, count=1).strip()
+    return cleaned, webhook
+
+
 def parse_template(source: str) -> ParsedTemplate:
     source = _extract_code_blocks(source)
+    source, webhook = _extract_webhook_config(source)
+
     blocks = re.split(r"\n{2,}", source)
-    result: list[TextNode | ActionRowGroup | SeparatorNode] = []
+    nodes: list[TextNode | ActionRowGroup | SeparatorNode] = []
 
     for block in blocks:
         stripped = block.strip()
@@ -115,10 +137,10 @@ def parse_template(source: str) -> ParsedTemplate:
             continue
 
         if stripped == "---":
-            result.append(SeparatorNode(size="large", visible=True))
+            nodes.append(SeparatorNode(size="large", visible=True))
         elif "[button" in stripped.lower() or "[separator" in stripped.lower():
-            _process_mixed_block(stripped, result)
+            _process_mixed_block(stripped, nodes)
         else:
-            result.append(TextNode(content=stripped))
+            nodes.append(TextNode(content=stripped))
 
-    return result
+    return ParsedTemplate(nodes=nodes, webhook=webhook)
