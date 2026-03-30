@@ -211,3 +211,7 @@ uv run main.py
 docker build -t roler .
 docker run --env-file .env roler
 ```
+
+## Acknowledgements
+
+Original idea by Algoinde on Enka Network Discord server.
