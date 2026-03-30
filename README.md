@@ -41,10 +41,10 @@ All attributes:
 
 | Attribute | Required | Values | Default | Description |
 |-----------|----------|--------|---------|-------------|
-| `role` | ✅ | Discord role ID (snowflake) | — | The role to assign/remove |
+| `role` | ✅ | Discord role ID (snowflake) | - | The role to assign/remove |
 | `color` | ❌ | `blurple` `green` `red` `grey` | `blurple` | Button color |
 | `mode` | ❌ | `toggle` `add` `remove` | `toggle` | How the role is applied |
-| `emoji` | ❌ | Unicode emoji or custom Discord emoji | — | Emoji shown on the button |
+| `emoji` | ❌ | Unicode emoji or custom Discord emoji | - | Emoji shown on the button |
 
 **Modes:**
 
