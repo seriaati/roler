@@ -47,11 +47,13 @@ A template is made up of **text lines** (rendered as panel description), **butto
 [button role=ROLE_ID]Label[/button]
 ```
 
+The `role` attribute is optional. When omitted, the bot matches the role by the button's label text (exact name match, case-sensitive). When provided, the bot looks up the role by its ID and the label is purely cosmetic.
+
 All attributes:
 
 | Attribute | Required | Values | Default | Description |
 |-----------|----------|--------|---------|-------------|
-| `role` | ✅ | Discord role ID (snowflake) | - | The role to assign/remove |
+| `role` | ❌ | Discord role ID (snowflake) | - | The role to assign/remove. If omitted, the role is matched by the button's label text |
 | `color` | ❌ | `blurple` `green` `red` `grey` | `blurple` | Button color |
 | `mode` | ❌ | `toggle` `add` `remove` | `toggle` | How the role is applied |
 | `emoji` | ❌ | Unicode emoji or custom Discord emoji | - | Emoji shown on the button |
@@ -147,10 +149,12 @@ Place it anywhere in the template (it is not rendered as part of the panel). Bot
 
 ## 🎮 Gaming roles
 
-[button role=1483649491885097040 color=grey mode=add]Genshin Impact[/button]
+[button color=grey mode=add]Genshin Impact[/button]
 
-[button role=1484415034753810482 color=grey mode=add]Honkai: Star Rail[/button]
+[button color=grey mode=add]Honkai: Star Rail[/button]
 ```
+
+> The last two buttons have no `role=` attribute — the bot will look up roles named exactly **Genshin Impact** and **Honkai: Star Rail** in the server at the time a member clicks the button.
 
 ### 3. Create the panel
 
@@ -176,8 +180,10 @@ The bot removes the panel message and cleans up its database record.
 
 The bot will reject a template and show an error if:
 
-- A button is missing a valid `role` ID
+- A button has no `role=` attribute **and** no label (name-based buttons require a label to match against)
 - A button has neither a label nor an `emoji`
+- Two buttons reference the same role ID
+- Two name-based buttons share the same label (case-insensitive)
 - A row contains more than **5 buttons**
 - The template contains more than **5 rows**
 - The `[webhook]` `name` is not between 1 and 80 characters

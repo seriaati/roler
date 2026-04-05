@@ -30,7 +30,7 @@ def _parse_button(attrs_str: str, label_text: str) -> ButtonNode:
     attrs: dict[str, str] = dict(_ATTR_RE.findall(attrs_str))
 
     role_id_str = attrs.get("role", "")
-    role_id = int(role_id_str) if role_id_str.isdigit() else 0
+    role_id: int | None = int(role_id_str) if role_id_str.isdigit() else None
 
     label = label_text.strip() or None
     emoji = attrs.get("emoji") or None

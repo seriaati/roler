@@ -10,7 +10,7 @@ class TextNode:
 
 @dataclass
 class ButtonNode:
-    role_id: int
+    role_id: int | None
     label: str | None
     emoji: str | None
     color: str
