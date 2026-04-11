@@ -15,6 +15,7 @@ class ButtonNode:
     emoji: str | None
     color: str
     mode: str
+    template_ref: str | None = None
 
 
 @dataclass
@@ -39,3 +40,4 @@ class WebhookConfig:
 class ParsedTemplate:
     nodes: list[TextNode | ActionRowGroup | SeparatorNode] = field(default_factory=list)
     webhook: WebhookConfig = field(default_factory=WebhookConfig)
+    template_id: str | None = None

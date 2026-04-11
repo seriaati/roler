@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 from app.markup.nodes import ActionRowGroup, SeparatorNode
@@ -12,6 +13,7 @@ _VALID_MODES = {"toggle", "add", "remove"}
 _VALID_SIZES = {"small", "large"}
 _MIN_SNOWFLAKE = 10**17
 _MAX_SNOWFLAKE = 10**19
+_TEMPLATE_ID_RE = re.compile(r"^[a-zA-Z0-9_-]{1,64}$")
 
 
 def _validate_webhook(template: ParsedTemplate, errors: list[str]) -> None:
@@ -26,6 +28,18 @@ def _validate_webhook(template: ParsedTemplate, errors: list[str]) -> None:
             errors.append(f"Webhook avatar must be a valid HTTP(S) URL (got {url!r})")
 
 
+def _validate_template_button(row_idx: int, btn: ButtonNode, errors: list[str]) -> None:
+    if btn.role_id is not None:
+        errors.append(f"Row {row_idx}: template button cannot also have a role= attribute")
+    if btn.label is None:
+        errors.append(f"Row {row_idx}: template button must have a label")
+    if btn.template_ref and not _TEMPLATE_ID_RE.match(btn.template_ref):
+        errors.append(
+            f"Row {row_idx}: template ID {btn.template_ref!r} is invalid"
+            " (use alphanumeric characters, hyphens, and underscores, 1-64 chars)"
+        )
+
+
 def _validate_button_identity(
     row_idx: int,
     btn: ButtonNode,
@@ -33,6 +47,10 @@ def _validate_button_identity(
     seen_role_names: set[str],
     errors: list[str],
 ) -> None:
+    if btn.template_ref is not None:
+        _validate_template_button(row_idx, btn, errors)
+        return
+
     if btn.role_id is not None:
         if btn.role_id in seen_role_ids:
             errors.append(f"Row {row_idx}: role ID {btn.role_id} is already used by another button")
@@ -67,6 +85,9 @@ def _validate_button_row(
 
     for btn in row.buttons:
         _validate_button_identity(row_idx, btn, seen_role_ids, seen_role_names, errors)
+
+        if btn.template_ref is not None:
+            continue
 
         if btn.label is None and btn.emoji is None:
             errors.append(f"Row {row_idx}: button for role {btn.role_id} needs a label or emoji")

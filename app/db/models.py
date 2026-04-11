@@ -25,3 +25,20 @@ class RolePanel(Model):
     class Meta:
         table = "role_panels"
         indexes: ClassVar = [("source_message_id",)]
+
+
+class PanelTemplate(Model):
+    id = fields.IntField(primary_key=True)
+    guild_id = fields.BigIntField()
+    template_id = fields.CharField(max_length=64)
+    source_channel_id = fields.BigIntField()
+    source_message_id = fields.BigIntField(unique=True)
+    content = fields.TextField()
+    created_by = fields.BigIntField()
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta:
+        table = "panel_templates"
+        unique_together = (("guild_id", "template_id"),)
+        indexes: ClassVar = [("guild_id", "template_id")]

@@ -4,7 +4,7 @@ from discord.ext import commands
 from loguru import logger
 
 from app.core.command_tree import CommandTree
-from app.panel.views import RolePanelButton, RolePanelButtonByName
+from app.panel.views import RolePanelButton, RolePanelButtonByName, TemplateButton
 
 
 class Roler(commands.Bot):
@@ -28,5 +28,5 @@ class Roler(commands.Bot):
         await self.load_extension("jishaku")
 
     async def setup_hook(self) -> None:
-        self.add_dynamic_items(RolePanelButton, RolePanelButtonByName)
+        self.add_dynamic_items(RolePanelButton, RolePanelButtonByName, TemplateButton)
         await self._load_cogs()

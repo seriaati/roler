@@ -19,6 +19,7 @@ _BUTTON_TAG_RE = re.compile(
 )
 _SEPARATOR_TAG_RE = re.compile(r"\[separator(?P<attrs>(?:\s+[a-z]+=\S+)*)\s*\]", re.IGNORECASE)
 _WEBHOOK_TAG_RE = re.compile(r"\[webhook(?P<attrs>(?:\s+[a-z]+=\S+)*)\s*\]", re.IGNORECASE)
+TEMPLATE_TAG_RE = re.compile(r"\[template\s+id=(?P<id>\S+)\s*\]", re.IGNORECASE)
 _ATTR_RE = re.compile(r"([a-z]+)=(\S+)", re.IGNORECASE)
 
 _VALID_COLORS = {"blurple", "green", "red", "grey"}
@@ -36,13 +37,16 @@ def _parse_button(attrs_str: str, label_text: str) -> ButtonNode:
     emoji = attrs.get("emoji") or None
     color = attrs.get("color", "blurple").lower()
     mode = attrs.get("mode", "toggle").lower()
+    template_ref = attrs.get("template") or None
 
     if color not in _VALID_COLORS:
         color = "blurple"
     if mode not in _VALID_MODES:
         mode = "toggle"
 
-    return ButtonNode(role_id=role_id, label=label, emoji=emoji, color=color, mode=mode)
+    return ButtonNode(
+        role_id=role_id, label=label, emoji=emoji, color=color, mode=mode, template_ref=template_ref
+    )
 
 
 def _parse_separator(attrs_str: str) -> SeparatorNode:
@@ -124,8 +128,18 @@ def _extract_webhook_config(source: str) -> tuple[str, WebhookConfig]:
     return cleaned, webhook
 
 
+def _extract_template_id(source: str) -> tuple[str, str | None]:
+    m = TEMPLATE_TAG_RE.search(source)
+    if not m:
+        return source, None
+    template_id = m.group("id")
+    cleaned = TEMPLATE_TAG_RE.sub("", source, count=1).strip()
+    return cleaned, template_id
+
+
 def parse_template(source: str) -> ParsedTemplate:
     source = _extract_code_blocks(source)
+    source, template_id = _extract_template_id(source)
     source, webhook = _extract_webhook_config(source)
 
     blocks = re.split(r"\n{2,}", source)
@@ -143,4 +157,4 @@ def parse_template(source: str) -> ParsedTemplate:
         else:
             nodes.append(TextNode(content=stripped))
 
-    return ParsedTemplate(nodes=nodes, webhook=webhook)
+    return ParsedTemplate(nodes=nodes, webhook=webhook, template_id=template_id)

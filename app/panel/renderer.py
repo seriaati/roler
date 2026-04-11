@@ -48,7 +48,9 @@ def render(template: ParsedTemplate) -> discord.ui.LayoutView:
             for btn in node.buttons:
                 emoji = _parse_emoji(btn.emoji) if btn.emoji else None
                 style = _COLOR_MAP.get(btn.color, discord.ButtonStyle.blurple)
-                if btn.role_id is not None:
+                if btn.template_ref is not None:
+                    custom_id = f"tpl:{btn.template_ref}"
+                elif btn.role_id is not None:
                     custom_id = f"rp:{btn.mode}:{btn.role_id}"
                 else:
                     custom_id = f"rp:{btn.mode}:name:{btn.label}"

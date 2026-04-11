@@ -5,6 +5,11 @@ from typing import TYPE_CHECKING
 import discord
 from loguru import logger
 
+from app.db.models import PanelTemplate
+from app.markup import parse_template
+from app.markup.validator import validate
+from app.panel.renderer import render
+
 if TYPE_CHECKING:
     import re
 
@@ -117,3 +122,45 @@ class RolePanelButtonByName(
             return
 
         await _apply_role(interaction, self.mode, role)
+
+
+class TemplateButton(
+    discord.ui.DynamicItem[discord.ui.Button], template=r"tpl:(?P<template_id>.+)"
+):
+    def __init__(self, template_id: str) -> None:
+        self.template_id = template_id
+        super().__init__(discord.ui.Button(custom_id=f"tpl:{template_id}"))
+
+    @classmethod
+    async def from_custom_id(
+        cls, _i: discord.Interaction, _item: discord.ui.Button, match: re.Match[str]
+    ) -> TemplateButton:
+        return cls(template_id=match["template_id"])
+
+    async def callback(self, i: Interaction) -> None:
+        if not i.guild:
+            await i.response.send_message(
+                "This button can only be used in a server.", ephemeral=True
+            )
+            return
+
+        await i.response.defer(ephemeral=True)
+
+        record = await PanelTemplate.filter(
+            guild_id=i.guild_id, template_id=self.template_id
+        ).first()
+
+        if record is None:
+            await i.followup.send(f"Template `{self.template_id}` not found.", ephemeral=True)
+            return
+
+        parsed = parse_template(record.content)
+        errors = validate(parsed)
+
+        if errors:
+            error_list = "\n".join(f"• {e}" for e in errors)
+            await i.followup.send(f"❌ **Template has errors:**\n{error_list}", ephemeral=True)
+            return
+
+        view = render(parsed)
+        await i.followup.send(view=view, ephemeral=True)
