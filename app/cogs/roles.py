@@ -386,7 +386,7 @@ class RolesCog(commands.Cog):
             )
             await self._resend_bot_message(panel, view, target_channel)
         except (discord.Forbidden, discord.HTTPException) as e:
-            logger.exception(f"Failed to edit bot panel message {panel.target_message_id}: {e}")
+            logger.error(f"Failed to edit bot panel message {panel.target_message_id}: {e}")
             await self._notify_creator_of_failure(panel, panel.source_message_id, str(e))
 
     async def _resend_bot_message(
