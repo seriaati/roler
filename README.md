@@ -24,11 +24,11 @@ Roler lets server admins write a simple markup template in any message, then tur
 
 ## Documentation
 
-Full usage guides, syntax reference, and validation rules are in the [documentation](https://gh.seria.moe/roler/index.md).
+Full usage guides, syntax reference, and validation rules are in the [documentation](https://gh.seria.moe/roler/).
 
 ## Self-Hosting
 
-Requires Python 3.14+ and PostgreSQL. See [docs/self-hosting.md](https://gh.seria.moe/roler/self-hosting.md) for setup instructions.
+Requires Python 3.14+ and PostgreSQL. See [docs/self-hosting.md](https://gh.seria.moe/roler/self-hosting/) for setup instructions.
 
 ## Acknowledgements
 
