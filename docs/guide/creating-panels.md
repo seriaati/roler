@@ -36,10 +36,15 @@ See the [Reference](../reference/button.md) section for full syntax on each tag.
 [button color=grey mode=add]Genshin Impact[/button]
 
 [button color=grey mode=add]Honkai: Star Rail[/button]
+
+## 🔔 Notification roles
+
+[button disabled=true color=grey]Ping: [/button] [button color=grey mode=add]Genshin Impact[/button]
+[button disabled=true color=grey]Ping: [/button] [button color=grey mode=add]Honkai: Star Rail[/button]
 ```
 
 !!! note
-    The last two buttons have no `role=` attribute - the bot will look up roles named exactly **Genshin Impact** and **Honkai: Star Rail** in the server at the time a member clicks the button.
+    The last two buttons have no `role=` attribute - the bot will look up roles named exactly **Genshin Impact** and **Honkai: Star Rail** in the server at the time a member clicks the button. The `Ping:` buttons are disabled labels that can share the same label across rows. Disabled buttons are exempt from uniqueness rules.
 
 ## Creating a Panel
 

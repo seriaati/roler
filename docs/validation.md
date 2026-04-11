@@ -6,8 +6,10 @@ The bot validates your template before creating or updating a panel. If any rule
 
 - A button with no `role=` attribute must have a label (used for name-based role matching)
 - A button must have either a label or an `emoji` (or both)
-- Two buttons cannot reference the same role ID
-- Two name-based buttons (no `role=`) cannot share the same label (case-insensitive)
+- Two buttons cannot reference the same role ID.
+- Two buttons cannot reference the same template ID.
+- Two name-based buttons (no `role=`) cannot share the same label (case-insensitive).
+- **Disabled buttons are exempt from all uniqueness rules.**
 
 ## Row Rules
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from app.markup.nodes import ActionRowGroup, GalleryNode, ImageNode, SeparatorNode
@@ -14,6 +15,13 @@ _VALID_SIZES = {"small", "large"}
 _MIN_SNOWFLAKE = 10**17
 _MAX_SNOWFLAKE = 10**19
 _TEMPLATE_ID_RE = re.compile(r"^[a-zA-Z0-9_-]{1,64}$")
+
+
+@dataclass
+class _SeenButtons:
+    role_ids: set[int] = field(default_factory=set)
+    role_names: set[str] = field(default_factory=set)
+    template_refs: set[str] = field(default_factory=set)
 
 
 def _validate_webhook(template: ParsedTemplate, errors: list[str]) -> None:
@@ -41,21 +49,23 @@ def _validate_template_button(row_idx: int, btn: ButtonNode, errors: list[str]) 
 
 
 def _validate_button_identity(
-    row_idx: int,
-    btn: ButtonNode,
-    seen_role_ids: set[int],
-    seen_role_names: set[str],
-    errors: list[str],
+    row_idx: int, btn: ButtonNode, seen: _SeenButtons, errors: list[str]
 ) -> None:
     if btn.template_ref is not None:
         _validate_template_button(row_idx, btn, errors)
+        if btn.template_ref in seen.template_refs:
+            errors.append(
+                f"Row {row_idx}: template {btn.template_ref!r} is already used by another button"
+            )
+        else:
+            seen.template_refs.add(btn.template_ref)
         return
 
     if btn.role_id is not None:
-        if btn.role_id in seen_role_ids:
+        if btn.role_id in seen.role_ids:
             errors.append(f"Row {row_idx}: role ID {btn.role_id} is already used by another button")
         else:
-            seen_role_ids.add(btn.role_id)
+            seen.role_ids.add(btn.role_id)
         if not (_MIN_SNOWFLAKE <= btn.role_id <= _MAX_SNOWFLAKE):
             errors.append(f"Row {row_idx}: button has an invalid role ID ({btn.role_id!r})")
         return
@@ -67,44 +77,54 @@ def _validate_button_identity(
         return
 
     label_key = btn.label.lower()
-    if label_key in seen_role_names:
+    if label_key in seen.role_names:
         errors.append(f"Row {row_idx}: role name {btn.label!r} is already used by another button")
     else:
-        seen_role_names.add(label_key)
+        seen.role_names.add(label_key)
+
+
+def _validate_url_button(row_idx: int, btn: ButtonNode, errors: list[str]) -> None:
+    assert btn.url is not None
+    if not btn.url.startswith(("http://", "https://")):
+        errors.append(
+            f"Row {row_idx}: URL button has an invalid URL {btn.url!r}"
+            " (must start with http:// or https://)"
+        )
+    if btn.role_id is not None:
+        errors.append(f"Row {row_idx}: URL button cannot also have a role= attribute")
+    if btn.template_ref is not None:
+        errors.append(f"Row {row_idx}: URL button cannot also have a template= attribute")
+    if btn.color not in {"grey", "blurple"}:
+        errors.append(
+            f"Row {row_idx}: URL buttons are always grey; color={btn.color!r} has no effect"
+        )
 
 
 def _validate_button_row(
-    row_idx: int,
-    row: ActionRowGroup,
-    seen_role_ids: set[int],
-    seen_role_names: set[str],
-    errors: list[str],
+    row_idx: int, row: ActionRowGroup, seen: _SeenButtons, errors: list[str]
 ) -> None:
     if len(row.buttons) > 5:
         errors.append(f"Row {row_idx} has {len(row.buttons)} buttons, max is 5")
 
     for btn in row.buttons:
         if btn.url is not None:
-            if not btn.url.startswith(("http://", "https://")):
-                errors.append(
-                    f"Row {row_idx}: URL button has an invalid URL {btn.url!r}"
-                    " (must start with http:// or https://)"
-                )
-            if btn.role_id is not None:
-                errors.append(
-                    f"Row {row_idx}: URL button cannot also have a role= attribute"
-                )
-            if btn.template_ref is not None:
-                errors.append(
-                    f"Row {row_idx}: URL button cannot also have a template= attribute"
-                )
-            if btn.color not in {"grey", "blurple"}:
-                errors.append(
-                    f"Row {row_idx}: URL buttons are always grey; color={btn.color!r} has no effect"
-                )
+            _validate_url_button(row_idx, btn, errors)
             continue
 
-        _validate_button_identity(row_idx, btn, seen_role_ids, seen_role_names, errors)
+        if btn.disabled:
+            if btn.label is None and btn.emoji is None:
+                errors.append(f"Row {row_idx}: disabled button needs a label or emoji")
+            if btn.template_ref is not None:
+                _validate_template_button(row_idx, btn, errors)
+            if (
+                btn.template_ref is None
+                and btn.role_id is not None
+                and not (_MIN_SNOWFLAKE <= btn.role_id <= _MAX_SNOWFLAKE)
+            ):
+                errors.append(f"Row {row_idx}: button has an invalid role ID ({btn.role_id!r})")
+            continue
+
+        _validate_button_identity(row_idx, btn, seen, errors)
 
         if btn.template_ref is not None:
             continue
@@ -153,10 +173,9 @@ def validate(template: ParsedTemplate) -> list[str]:
     if len(action_rows) > 5:
         errors.append(f"Too many button rows ({len(action_rows)}), max is 5")
 
-    seen_role_ids: set[int] = set()
-    seen_role_names: set[str] = set()
+    seen = _SeenButtons()
     for row_idx, row in enumerate(action_rows, start=1):
-        _validate_button_row(row_idx, row, seen_role_ids, seen_role_names, errors)
+        _validate_button_row(row_idx, row, seen, errors)
 
     for sep_idx, sep in enumerate(
         (node for node in template.nodes if isinstance(node, SeparatorNode)), start=1

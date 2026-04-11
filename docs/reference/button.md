@@ -61,6 +61,7 @@ A button with a `url=` attribute becomes a link button that opens the URL when c
 - Cannot assign or remove roles (`role=` is not allowed)
 - Cannot open templates (`template=` is not allowed)
 - Must use a valid `http://` or `https://` URL
+- Multiple URL buttons with the same label or URL are allowed
 
 ```
 [button url=https://discord.com]Visit Discord[/button]
@@ -74,6 +75,15 @@ Add `disabled=true` to render a button as greyed out and non-interactive:
 ```
 [button disabled=true color=grey]Unavailable[/button]
 [button role=1234567890 disabled=true]Coming Soon[/button]
+```
+
+Disabled buttons are **exempt from all uniqueness rules** — multiple disabled buttons can share the same `role=`, `template=`, or label without conflict. Only enabled buttons are tracked for uniqueness.
+
+This makes disabled buttons useful for category prefixes, row headers, or "coming soon" placeholders:
+
+```
+[button disabled=true color=grey]Ping: [/button] [button]Genshin Impact[/button]
+[button disabled=true color=grey]Ping: [/button] [button]Honkai: Star Rail[/button]
 ```
 
 ## Rows
