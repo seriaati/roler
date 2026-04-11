@@ -1,5 +1,5 @@
 site_name: Roler
-site_description: Discord bot for easy and descriptive role management
+site_description: Discord bot for easy and descriptive role management.
 site_url: https://gh.seria.moe/roler
 repo_url: https://github.com/seriaati/roler
 repo_name: seria/roler
@@ -62,6 +62,7 @@ nav:
 
 plugins:
   - search
+  - social
 
 markdown_extensions:
   - admonition
