@@ -289,7 +289,7 @@ class RolesCog(commands.Cog):
         await interaction.response.send_message("✅ Role panel deleted.", ephemeral=True)
 
     @commands.Cog.listener()
-    async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent) -> None:
+    async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent) -> None:  # noqa: PLR0911
         panel = await RolePanel.filter(source_message_id=payload.message_id).first()
         if panel is None:
             return
@@ -309,7 +309,13 @@ class RolesCog(commands.Cog):
             await self._notify_creator_of_errors(panel, payload.message_id, errors)
             return
 
-        view = render(template)
+        try:
+            view = render(template)
+        except Exception as e:
+            logger.exception(f"Failed to render template for panel {panel.id}: {e}")
+            await self._notify_creator_of_failure(panel, payload.message_id, str(e))
+            return
+
         target_channel = self.bot.get_channel(panel.target_channel_id)
         if not isinstance(target_channel, discord.TextChannel):
             logger.warning(
@@ -357,6 +363,17 @@ class RolesCog(commands.Cog):
         except Exception as e:
             logger.warning(f"Could not notify panel creator: {e}")
 
+    async def _notify_creator_of_failure(
+        self, panel: RolePanel, message_id: int, reason: str
+    ) -> None:
+        try:
+            creator = await self.bot.fetch_user(panel.created_by)
+            await creator.send(
+                f"⚠️ Your role panel (message `{message_id}`) could not be updated: {reason}"
+            )
+        except Exception as e:
+            logger.warning(f"Could not notify panel creator of failure: {e}")
+
     async def _edit_bot_message(
         self, panel: RolePanel, view: discord.ui.LayoutView, target_channel: discord.TextChannel
     ) -> None:
@@ -370,6 +387,7 @@ class RolesCog(commands.Cog):
             await self._resend_bot_message(panel, view, target_channel)
         except (discord.Forbidden, discord.HTTPException) as e:
             logger.exception(f"Failed to edit bot panel message {panel.target_message_id}: {e}")
+            await self._notify_creator_of_failure(panel, panel.source_message_id, str(e))
 
     async def _resend_bot_message(
         self, panel: RolePanel, view: discord.ui.LayoutView, target_channel: discord.TextChannel
@@ -378,6 +396,7 @@ class RolesCog(commands.Cog):
             sent = await target_channel.send(view=view)
         except (discord.Forbidden, discord.HTTPException) as e:
             logger.exception(f"Failed to resend bot panel {panel.id} in {target_channel.id}: {e}")
+            await self._notify_creator_of_failure(panel, panel.source_message_id, str(e))
             return
 
         panel.target_message_id = sent.id
@@ -415,6 +434,7 @@ class RolesCog(commands.Cog):
             await self._resend_panel(panel, view, template, target_channel, bot_user)
         except (discord.Forbidden, discord.HTTPException) as e:
             logger.exception(f"Failed to edit panel message {panel.target_message_id}: {e}")
+            await self._notify_creator_of_failure(panel, panel.source_message_id, str(e))
 
     async def _resend_panel(
         self,
@@ -447,6 +467,7 @@ class RolesCog(commands.Cog):
                 sent = await _send_via_webhook(webhook, view, template, bot_user)
             except (discord.Forbidden, discord.HTTPException) as e:
                 logger.exception(f"Failed to resend panel {panel.id} in {target_channel.id}: {e}")
+                await self._notify_creator_of_failure(panel, panel.source_message_id, str(e))
                 return
 
             new_name = template.webhook.name or bot_user.name
@@ -472,6 +493,7 @@ class RolesCog(commands.Cog):
                 sent = await target_channel.send(view=view)
             except (discord.Forbidden, discord.HTTPException) as e:
                 logger.exception(f"Failed to resend panel {panel.id} in {target_channel.id}: {e}")
+                await self._notify_creator_of_failure(panel, panel.source_message_id, str(e))
                 return
 
             panel.target_message_id = sent.id
