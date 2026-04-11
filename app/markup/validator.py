@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
-from app.markup.nodes import ActionRowGroup, SeparatorNode
+from app.markup.nodes import ActionRowGroup, GalleryNode, ImageNode, SeparatorNode
 
 if TYPE_CHECKING:
     from app.markup.nodes import ButtonNode, ParsedTemplate
@@ -84,6 +84,26 @@ def _validate_button_row(
         errors.append(f"Row {row_idx} has {len(row.buttons)} buttons, max is 5")
 
     for btn in row.buttons:
+        if btn.url is not None:
+            if not btn.url.startswith(("http://", "https://")):
+                errors.append(
+                    f"Row {row_idx}: URL button has an invalid URL {btn.url!r}"
+                    " (must start with http:// or https://)"
+                )
+            if btn.role_id is not None:
+                errors.append(
+                    f"Row {row_idx}: URL button cannot also have a role= attribute"
+                )
+            if btn.template_ref is not None:
+                errors.append(
+                    f"Row {row_idx}: URL button cannot also have a template= attribute"
+                )
+            if btn.color not in {"grey", "blurple"}:
+                errors.append(
+                    f"Row {row_idx}: URL buttons are always grey; color={btn.color!r} has no effect"
+                )
+            continue
+
         _validate_button_identity(row_idx, btn, seen_role_ids, seen_role_names, errors)
 
         if btn.template_ref is not None:
@@ -100,6 +120,26 @@ def _validate_button_row(
         if btn.mode not in _VALID_MODES:
             errors.append(
                 f"Row {row_idx}: button for role {btn.role_id} has invalid mode {btn.mode!r}"
+            )
+
+
+def _validate_image(idx: int, node: ImageNode, errors: list[str]) -> None:
+    if not node.url.startswith(("http://", "https://")):
+        errors.append(
+            f"Image {idx}: URL {node.url!r} is invalid (must start with http:// or https://)"
+        )
+
+
+def _validate_gallery(idx: int, node: GalleryNode, errors: list[str]) -> None:
+    if len(node.items) < 1:
+        errors.append(f"Gallery {idx}: must have at least 1 item")
+    if len(node.items) > 10:
+        errors.append(f"Gallery {idx}: has {len(node.items)} items, max is 10")
+    for item_idx, item in enumerate(node.items, start=1):
+        if not item.url.startswith(("http://", "https://")):
+            errors.append(
+                f"Gallery {idx}, item {item_idx}: URL {item.url!r} is invalid"
+                " (must start with http:// or https://)"
             )
 
 
@@ -123,5 +163,15 @@ def validate(template: ParsedTemplate) -> list[str]:
     ):
         if sep.size not in _VALID_SIZES:
             errors.append(f"Separator {sep_idx} has invalid size {sep.size!r}")
+
+    for img_idx, img in enumerate(
+        (node for node in template.nodes if isinstance(node, ImageNode)), start=1
+    ):
+        _validate_image(img_idx, img, errors)
+
+    for gal_idx, gal in enumerate(
+        (node for node in template.nodes if isinstance(node, GalleryNode)), start=1
+    ):
+        _validate_gallery(gal_idx, gal, errors)
 
     return errors

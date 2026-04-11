@@ -40,7 +40,7 @@ The bot's role must be positioned **above** any role it needs to assign in the s
 
 In any channel the bot can read, send a message containing your role panel template. You can wrap it in a code block (` ``` `) or write it as plain text.
 
-A template is made up of **text lines** (rendered as panel description), **button tags**, and **separator tags**.
+A template is made up of **text lines** (rendered as panel description), **button tags**, **separator tags**, **image tags**, and **gallery tags**.
 
 #### Button syntax
 
@@ -54,11 +54,13 @@ All attributes:
 
 | Attribute | Required | Values | Default | Description |
 |-----------|----------|--------|---------|-------------|
-| `role` | ❌ | Discord role ID (snowflake) | - | The role to assign/remove. If omitted, the role is matched by the button's label text. Mutually exclusive with `template` |
-| `template` | ❌ | Template ID (alphanumeric, hyphens, underscores) | - | References a saved template. Clicking the button shows the template as an ephemeral panel. Mutually exclusive with `role` |
-| `color` | ❌ | `blurple` `green` `red` `grey` | `blurple` | Button color |
+| `role` | ❌ | Discord role ID (snowflake) | - | The role to assign/remove. If omitted, the role is matched by the button's label text. Mutually exclusive with `template` and `url` |
+| `template` | ❌ | Template ID (alphanumeric, hyphens, underscores) | - | References a saved template. Clicking the button shows the template as an ephemeral panel. Mutually exclusive with `role` and `url` |
+| `url` | ❌ | `http://` or `https://` URL | - | Makes the button a link that opens the URL. Mutually exclusive with `role` and `template`. The button is always grey |
+| `color` | ❌ | `blurple` `green` `red` `grey` | `blurple` | Button color. Ignored when `url` is set (URL buttons are always grey) |
 | `mode` | ❌ | `toggle` `add` `remove` | `toggle` | How the role is applied |
 | `emoji` | ❌ | Unicode emoji or custom Discord emoji | - | Emoji shown on the button |
+| `disabled` | ❌ | `true` `false` | `false` | Whether the button is greyed out and non-interactive |
 
 **Modes:**
 
@@ -91,6 +93,29 @@ Example:
 
 > The bot must be in a server that has access to the emoji, or the emoji must be from a server the bot shares with the user.
 
+#### URL buttons
+
+A button with a `url=` attribute becomes a link button that opens the URL when clicked. URL buttons:
+
+- Are always displayed in grey regardless of the `color` attribute
+- Cannot assign or remove roles (`role=` is not allowed)
+- Cannot open templates (`template=` is not allowed)
+- Must use a valid `http://` or `https://` URL
+
+```
+[button url=https://discord.com]Visit Discord[/button]
+[button url=https://example.com emoji=🔗]Website[/button]
+```
+
+#### Disabled buttons
+
+Add `disabled=true` to any button to render it as greyed out and non-interactive:
+
+```
+[button disabled=true color=grey]Unavailable[/button]
+[button role=1234567890 disabled=true]Coming Soon[/button]
+```
+
 #### Rows
 
 Buttons on the **same line** form one action row (up to 5 buttons per row). A **blank line** between button lines starts a new row. Up to **5 rows** are allowed per panel.
@@ -117,6 +142,39 @@ All attributes:
 |-----------|----------|--------|---------|-------------|
 | `size` | ❌ | `small` `large` | `large` | Spacing size of the separator |
 | `visible` | ❌ | `true` `false` | `true` | Whether the divider line is visible |
+
+#### Image syntax
+
+Display a single image in the panel using the self-closing `[image]` tag:
+
+```
+[image url=https://example.com/photo.png]
+[image url=https://example.com/photo.png spoiler=true]
+```
+
+| Attribute | Required | Values | Default | Description |
+|-----------|----------|--------|---------|-------------|
+| `url` | ✅ | `http://` or `https://` URL | - | The image URL to display |
+| `spoiler` | ❌ | `true` `false` | `false` | Whether to hide the image behind a spoiler blur |
+
+#### Gallery syntax
+
+Display multiple images in a single gallery block using `[gallery]...[/gallery]` with `[item]` tags inside:
+
+```
+[gallery]
+[item url=https://example.com/photo1.png]
+[item url=https://example.com/photo2.png spoiler=true]
+[item url=https://example.com/photo3.png]
+[/gallery]
+```
+
+Each `[item]` must be on its own line. The gallery supports **1 to 10 items** (Discord's limit).
+
+| Attribute | Required | Values | Default | Description |
+|-----------|----------|--------|---------|-------------|
+| `url` | ✅ | `http://` or `https://` URL | - | The image URL for this gallery item |
+| `spoiler` | ❌ | `true` `false` | `false` | Whether to hide this item behind a spoiler blur |
 
 #### Webhook identity syntax
 
@@ -263,6 +321,11 @@ The bot will reject a template and show an error if:
 - A template button (`template=`) also has a `role=` attribute (mutually exclusive)
 - A template button has no label
 - A template ID contains characters other than alphanumeric, hyphens, or underscores, or is longer than 64 characters
+- A URL button (`url=`) also has a `role=` or `template=` attribute (mutually exclusive)
+- A URL button's `url` does not start with `http://` or `https://`
+- An `[image]` tag's `url` does not start with `http://` or `https://`
+- A `[gallery]` has fewer than **1** or more than **10** items
+- A `[gallery]` item's `url` does not start with `http://` or `https://`
 
 ## Self-Hosting
 

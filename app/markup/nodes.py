@@ -16,6 +16,8 @@ class ButtonNode:
     color: str
     mode: str
     template_ref: str | None = None
+    disabled: bool = False
+    url: str | None = None
 
 
 @dataclass
@@ -37,7 +39,26 @@ class WebhookConfig:
 
 
 @dataclass
+class ImageNode:
+    url: str
+    spoiler: bool = False
+
+
+@dataclass
+class GalleryItemNode:
+    url: str
+    spoiler: bool = False
+
+
+@dataclass
+class GalleryNode:
+    items: list[GalleryItemNode] = field(default_factory=list)
+
+
+@dataclass
 class ParsedTemplate:
-    nodes: list[TextNode | ActionRowGroup | SeparatorNode] = field(default_factory=list)
+    nodes: list[TextNode | ActionRowGroup | SeparatorNode | ImageNode | GalleryNode] = field(
+        default_factory=list
+    )
     webhook: WebhookConfig = field(default_factory=WebhookConfig)
     template_id: str | None = None
