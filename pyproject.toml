@@ -26,6 +26,7 @@ typeCheckingMode = "standard"
 
 [dependency-groups]
 dev = ["pyright>=1.1.408"]
+docs = ["mkdocs>=1.6", "mkdocs-material>=9.6"]
 
 [tool.tortoise]
 tortoise_orm = "app.db.conn.TORTOISE_ORM"

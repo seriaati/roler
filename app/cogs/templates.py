@@ -154,7 +154,7 @@ class TemplatesCog(commands.Cog):
                     creator = await self.bot.fetch_user(record.created_by)
                     await creator.send(
                         f"⚠️ Could not rename template `{record.template_id}` to"
-                        f" `{parsed.template_id}` — that ID is already in use."
+                        f" `{parsed.template_id}` - that ID is already in use."
                         " The old template remains unchanged."
                     )
                 except Exception as e:
