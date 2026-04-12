@@ -19,20 +19,29 @@ from app.markup.nodes import (
 _CODE_BLOCK_RE = re.compile(r"```[^\n]*\n?(.*?)```", re.DOTALL)
 _FENCE_LINE_RE = re.compile(r"^```[^\n]*$", re.MULTILINE)
 
+_ATTR_PATTERN = r'(?:\s+[a-z_]+=(?:"[^"]*"|\S+))*'
+_ATTR_RE = re.compile(r'([a-z_]+)=(?:"([^"]*)"|(\S+))', re.IGNORECASE)
+
 _BUTTON_TAG_RE = re.compile(
-    r"\[button(?P<attrs>(?:\s+[a-z_]+=\S+)*)\s*\](?P<label>[^\[]*)\[/button\]", re.IGNORECASE
+    rf"\[button(?P<attrs>{_ATTR_PATTERN})\s*\](?P<label>[^\[]*)\[/button\]", re.IGNORECASE
 )
-_SEPARATOR_TAG_RE = re.compile(r"\[separator(?P<attrs>(?:\s+[a-z_]+=\S+)*)\s*\]", re.IGNORECASE)
-_WEBHOOK_TAG_RE = re.compile(r"\[webhook(?P<attrs>(?:\s+[a-z_]+=\S+)*)\s*\]", re.IGNORECASE)
-TEMPLATE_TAG_RE = re.compile(r"\[template\s+id=(?P<id>\S+)\s*\]", re.IGNORECASE)
-_IMAGE_TAG_RE = re.compile(r"\[image(?P<attrs>(?:\s+[a-z_]+=\S+)*)\s*\]", re.IGNORECASE)
+_SEPARATOR_TAG_RE = re.compile(rf"\[separator(?P<attrs>{_ATTR_PATTERN})\s*\]", re.IGNORECASE)
+_WEBHOOK_TAG_RE = re.compile(rf"\[webhook(?P<attrs>{_ATTR_PATTERN})\s*\]", re.IGNORECASE)
+TEMPLATE_TAG_RE = re.compile(
+    r'\[template\s+id=(?:"(?P<id_q>[^"]*)"|(?P<id_u>\S+))\s*\]', re.IGNORECASE
+)
+_IMAGE_TAG_RE = re.compile(rf"\[image(?P<attrs>{_ATTR_PATTERN})\s*\]", re.IGNORECASE)
 _GALLERY_OPEN_RE = re.compile(r"\[gallery\s*\]", re.IGNORECASE)
 _GALLERY_CLOSE_RE = re.compile(r"\[/gallery\]", re.IGNORECASE)
-_GALLERY_ITEM_RE = re.compile(r"\[item(?P<attrs>(?:\s+[a-z_]+=\S+)*)\s*\]", re.IGNORECASE)
+_GALLERY_ITEM_RE = re.compile(rf"\[item(?P<attrs>{_ATTR_PATTERN})\s*\]", re.IGNORECASE)
 _SECTION_OPEN_RE = re.compile(r"\[section\s*\]", re.IGNORECASE)
 _SECTION_CLOSE_RE = re.compile(r"\[/section\]", re.IGNORECASE)
-_THUMBNAIL_TAG_RE = re.compile(r"\[thumbnail(?P<attrs>(?:\s+[a-z_]+=\S+)*)\s*\]", re.IGNORECASE)
-_ATTR_RE = re.compile(r"([a-z_]+)=(\S+)", re.IGNORECASE)
+_THUMBNAIL_TAG_RE = re.compile(rf"\[thumbnail(?P<attrs>{_ATTR_PATTERN})\s*\]", re.IGNORECASE)
+
+
+def _parse_attrs(attrs_str: str) -> dict[str, str]:
+    return {key: (quoted or unquoted) for key, quoted, unquoted in _ATTR_RE.findall(attrs_str)}
+
 
 _VALID_COLORS = {"blurple", "green", "red", "grey"}
 _VALID_MODES = {"toggle", "add", "remove"}
@@ -40,7 +49,7 @@ _VALID_SIZES = {"small", "large"}
 
 
 def _parse_button(attrs_str: str, label_text: str) -> ButtonNode:
-    attrs: dict[str, str] = dict(_ATTR_RE.findall(attrs_str))
+    attrs = _parse_attrs(attrs_str)
 
     role_id_str = attrs.get("role", "")
     role_id: int | None = int(role_id_str) if role_id_str.isdigit() else None
@@ -71,14 +80,14 @@ def _parse_button(attrs_str: str, label_text: str) -> ButtonNode:
 
 
 def _parse_image(attrs_str: str) -> ImageNode:
-    attrs: dict[str, str] = dict(_ATTR_RE.findall(attrs_str))
+    attrs = _parse_attrs(attrs_str)
     url = attrs.get("url", "")
     spoiler = attrs.get("spoiler", "false").lower() == "true"
     return ImageNode(url=url, spoiler=spoiler)
 
 
 def _parse_gallery_item(attrs_str: str) -> GalleryItemNode:
-    attrs: dict[str, str] = dict(_ATTR_RE.findall(attrs_str))
+    attrs = _parse_attrs(attrs_str)
     url = attrs.get("url", "")
     spoiler = attrs.get("spoiler", "false").lower() == "true"
     return GalleryItemNode(url=url, spoiler=spoiler)
@@ -90,7 +99,7 @@ def _parse_gallery(block: str) -> GalleryNode:
 
 
 def _parse_thumbnail(attrs_str: str) -> ThumbnailNode:
-    attrs: dict[str, str] = dict(_ATTR_RE.findall(attrs_str))
+    attrs = _parse_attrs(attrs_str)
     url = attrs.get("url", "")
     description = attrs.get("description") or None
     spoiler = attrs.get("spoiler", "false").lower() == "true"
@@ -131,7 +140,7 @@ def _parse_section(block: str) -> SectionNode:
 
 
 def _parse_separator(attrs_str: str) -> SeparatorNode:
-    attrs: dict[str, str] = dict(_ATTR_RE.findall(attrs_str))
+    attrs = _parse_attrs(attrs_str)
 
     size = attrs.get("size", "large").lower()
     if size not in _VALID_SIZES:
@@ -144,7 +153,7 @@ def _parse_separator(attrs_str: str) -> SeparatorNode:
 
 
 def _parse_webhook(attrs_str: str) -> WebhookConfig:
-    attrs: dict[str, str] = dict(_ATTR_RE.findall(attrs_str))
+    attrs = _parse_attrs(attrs_str)
     return WebhookConfig(
         name=attrs.get("name") or None, avatar_url=attrs.get("avatar") or None, present=True
     )
@@ -253,7 +262,7 @@ def _extract_template_id(source: str) -> tuple[str, str | None]:
     m = TEMPLATE_TAG_RE.search(source)
     if not m:
         return source, None
-    template_id = m.group("id")
+    template_id = m.group("id_q") or m.group("id_u")
     cleaned = TEMPLATE_TAG_RE.sub("", source, count=1).strip()
     return cleaned, template_id
 
