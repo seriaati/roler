@@ -55,6 +55,7 @@ nav:
       - Separator: reference/separator.md
       - Image: reference/image.md
       - Gallery: reference/gallery.md
+      - Section: reference/section.md
       - Webhook: reference/webhook.md
       - Template Tag: reference/template-tag.md
   - Validation Rules: validation.md

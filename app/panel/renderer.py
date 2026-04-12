@@ -5,7 +5,14 @@ from typing import TYPE_CHECKING
 
 import discord
 
-from app.markup.nodes import GalleryNode, ImageNode, SeparatorNode, TextNode
+from app.markup.nodes import (
+    GalleryNode,
+    ImageNode,
+    SectionNode,
+    SeparatorNode,
+    TextNode,
+    ThumbnailNode,
+)
 
 if TYPE_CHECKING:
     from app.markup.nodes import ActionRowGroup, ButtonNode, ParsedTemplate
@@ -44,6 +51,36 @@ def _resolve_custom_id(btn: ButtonNode, noop_counter: list[int]) -> str:
     if btn.role_id is not None:
         return f"rp:{btn.mode}:{btn.role_id}"
     return f"rp:{btn.mode}:name:{btn.label}"
+
+
+def _build_section(node: SectionNode, noop_counter: list[int]) -> discord.ui.Section:
+    text_displays = [discord.ui.TextDisplay(child.content) for child in node.children]
+    if isinstance(node.accessory, ThumbnailNode):
+        accessory: discord.ui.Thumbnail | discord.ui.Button = discord.ui.Thumbnail(
+            media=node.accessory.url,
+            description=node.accessory.description,
+            spoiler=node.accessory.spoiler,
+        )
+    else:
+        btn = node.accessory
+        emoji = _parse_emoji(btn.emoji) if btn.emoji else None
+        if btn.url is not None:
+            accessory = discord.ui.Button(
+                style=discord.ButtonStyle.link,
+                url=btn.url,
+                label=btn.label,
+                emoji=emoji,
+                disabled=btn.disabled,
+            )
+        else:
+            accessory = discord.ui.Button(
+                style=_COLOR_MAP.get(btn.color, discord.ButtonStyle.blurple),
+                label=btn.label,
+                emoji=emoji,
+                custom_id=_resolve_custom_id(btn, noop_counter),
+                disabled=btn.disabled,
+            )
+    return discord.ui.Section(*text_displays, accessory=accessory)
 
 
 def _build_action_row(node: ActionRowGroup, noop_counter: list[int]) -> discord.ui.ActionRow:
@@ -92,6 +129,8 @@ def render(template: ParsedTemplate) -> discord.ui.LayoutView:
                 for item in node.items
             ]
             view.add_item(discord.ui.MediaGallery(*items))
+        elif isinstance(node, SectionNode):
+            view.add_item(_build_section(node, noop_counter))
         else:
             view.add_item(_build_action_row(node, noop_counter))
 

@@ -9,8 +9,10 @@ from app.markup.nodes import (
     GalleryNode,
     ImageNode,
     ParsedTemplate,
+    SectionNode,
     SeparatorNode,
     TextNode,
+    ThumbnailNode,
     WebhookConfig,
 )
 
@@ -27,6 +29,9 @@ _IMAGE_TAG_RE = re.compile(r"\[image(?P<attrs>(?:\s+[a-z_]+=\S+)*)\s*\]", re.IGN
 _GALLERY_OPEN_RE = re.compile(r"\[gallery\s*\]", re.IGNORECASE)
 _GALLERY_CLOSE_RE = re.compile(r"\[/gallery\]", re.IGNORECASE)
 _GALLERY_ITEM_RE = re.compile(r"\[item(?P<attrs>(?:\s+[a-z_]+=\S+)*)\s*\]", re.IGNORECASE)
+_SECTION_OPEN_RE = re.compile(r"\[section\s*\]", re.IGNORECASE)
+_SECTION_CLOSE_RE = re.compile(r"\[/section\]", re.IGNORECASE)
+_THUMBNAIL_TAG_RE = re.compile(r"\[thumbnail(?P<attrs>(?:\s+[a-z_]+=\S+)*)\s*\]", re.IGNORECASE)
 _ATTR_RE = re.compile(r"([a-z_]+)=(\S+)", re.IGNORECASE)
 
 _VALID_COLORS = {"blurple", "green", "red", "grey"}
@@ -80,11 +85,38 @@ def _parse_gallery_item(attrs_str: str) -> GalleryItemNode:
 
 
 def _parse_gallery(block: str) -> GalleryNode:
-    items = [
-        _parse_gallery_item(m.group("attrs"))
-        for m in _GALLERY_ITEM_RE.finditer(block)
-    ]
+    items = [_parse_gallery_item(m.group("attrs")) for m in _GALLERY_ITEM_RE.finditer(block)]
     return GalleryNode(items=items)
+
+
+def _parse_thumbnail(attrs_str: str) -> ThumbnailNode:
+    attrs: dict[str, str] = dict(_ATTR_RE.findall(attrs_str))
+    url = attrs.get("url", "")
+    description = attrs.get("description") or None
+    spoiler = attrs.get("spoiler", "false").lower() == "true"
+    return ThumbnailNode(url=url, description=description, spoiler=spoiler)
+
+
+def _parse_section(block: str) -> SectionNode:
+    children: list[TextNode] = []
+    accessory: ThumbnailNode | ButtonNode | None = None
+
+    for line in block.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        line_lower = stripped.lower()
+        if thumb_m := _THUMBNAIL_TAG_RE.search(stripped):
+            accessory = _parse_thumbnail(thumb_m.group("attrs"))
+        elif btn_m := _BUTTON_TAG_RE.search(stripped):
+            accessory = _parse_button(btn_m.group("attrs"), btn_m.group("label"))
+        elif not line_lower.startswith("["):
+            children.append(TextNode(content=stripped))
+
+    if accessory is None:
+        accessory = ThumbnailNode(url="")
+
+    return SectionNode(children=children, accessory=accessory)
 
 
 def _parse_separator(attrs_str: str) -> SeparatorNode:
@@ -121,7 +153,7 @@ def _parse_button_block(block: str) -> ActionRowGroup | None:
 
 def _process_mixed_block(
     stripped: str,
-    result: list[TextNode | ActionRowGroup | SeparatorNode | ImageNode | GalleryNode],
+    result: list[TextNode | ActionRowGroup | SeparatorNode | ImageNode | GalleryNode | SectionNode],
 ) -> None:
     lines = stripped.splitlines()
     current_row_lines: list[str] = []
@@ -172,12 +204,29 @@ def _extract_galleries(source: str) -> tuple[str, list[tuple[str, GalleryNode]]]
         return f"\n{placeholder}\n"
 
     cleaned = re.sub(
-        r"\[gallery\s*\].*?\[/gallery\]",
-        replacer,
-        source,
-        flags=re.IGNORECASE | re.DOTALL,
+        r"\[gallery\s*\].*?\[/gallery\]", replacer, source, flags=re.IGNORECASE | re.DOTALL
     )
     return cleaned, galleries
+
+
+def _extract_sections(source: str) -> tuple[str, list[tuple[str, SectionNode]]]:
+    sections: list[tuple[str, SectionNode]] = []
+    idx = 0
+
+    def replacer(m: re.Match[str]) -> str:
+        nonlocal idx
+        placeholder = f"__SECTION_{idx}__"
+        inner = re.sub(
+            r"^\[section\s*\]|\[/section\]$", "", m.group(0), flags=re.IGNORECASE
+        ).strip()
+        sections.append((placeholder, _parse_section(inner)))
+        idx += 1
+        return f"\n{placeholder}\n"
+
+    cleaned = re.sub(
+        r"\[section\s*\].*?\[/section\]", replacer, source, flags=re.IGNORECASE | re.DOTALL
+    )
+    return cleaned, sections
 
 
 def _extract_webhook_config(source: str) -> tuple[str, WebhookConfig]:
@@ -203,11 +252,15 @@ def parse_template(source: str) -> ParsedTemplate:
     source, template_id = _extract_template_id(source)
     source, webhook = _extract_webhook_config(source)
     source, galleries = _extract_galleries(source)
+    source, sections = _extract_sections(source)
 
     gallery_map: dict[str, GalleryNode] = dict(galleries)
+    section_map: dict[str, SectionNode] = dict(sections)
 
     blocks = re.split(r"\n{2,}", source)
-    nodes: list[TextNode | ActionRowGroup | SeparatorNode | ImageNode | GalleryNode] = []
+    nodes: list[
+        TextNode | ActionRowGroup | SeparatorNode | ImageNode | GalleryNode | SectionNode
+    ] = []
 
     for block in blocks:
         stripped = block.strip()
@@ -216,6 +269,8 @@ def parse_template(source: str) -> ParsedTemplate:
 
         if stripped in gallery_map:
             nodes.append(gallery_map[stripped])
+        elif stripped in section_map:
+            nodes.append(section_map[stripped])
         elif stripped == "---":
             nodes.append(SeparatorNode(size="large", visible=True))
         elif (

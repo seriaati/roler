@@ -44,3 +44,13 @@ The bot validates your template before creating or updating a panel. If any rule
 
 - A `[gallery]` must contain at least **1** item and no more than **10** items
 - Each `[gallery]` item's `url` must start with `http://` or `https://`
+
+## Section Rules
+
+- A `[section]` must have between **1 and 3** text children
+- A `[section]` must have exactly **1** accessory (`[thumbnail]` or `[button]`)
+
+## Thumbnail Rules
+
+- A `[thumbnail]` `url` must start with `http://` or `https://`
+- A `[thumbnail]` `description` must be **256 characters or fewer**

@@ -4,7 +4,14 @@ import re
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from app.markup.nodes import ActionRowGroup, GalleryNode, ImageNode, SeparatorNode
+from app.markup.nodes import (
+    ActionRowGroup,
+    GalleryNode,
+    ImageNode,
+    SectionNode,
+    SeparatorNode,
+    ThumbnailNode,
+)
 
 if TYPE_CHECKING:
     from app.markup.nodes import ButtonNode, ParsedTemplate
@@ -143,6 +150,28 @@ def _validate_button_row(
             )
 
 
+def _validate_section(idx: int, node: SectionNode, errors: list[str]) -> None:
+    if not (1 <= len(node.children) <= 3):
+        errors.append(
+            f"Section {idx}: must have between 1 and 3 text children (got {len(node.children)})"
+        )
+
+    if isinstance(node.accessory, ThumbnailNode):
+        if not node.accessory.url.startswith(("http://", "https://")):
+            errors.append(
+                f"Section {idx}: thumbnail URL {node.accessory.url!r} is invalid"
+                " (must start with http:// or https://)"
+            )
+        if node.accessory.description is not None and len(node.accessory.description) > 256:
+            errors.append(
+                f"Section {idx}: thumbnail description exceeds 256 characters"
+                f" (got {len(node.accessory.description)})"
+            )
+    else:
+        seen = _SeenButtons()
+        _validate_button_row(idx, ActionRowGroup(buttons=[node.accessory]), seen, errors)
+
+
 def _validate_image(idx: int, node: ImageNode, errors: list[str]) -> None:
     if not node.url.startswith(("http://", "https://")):
         errors.append(
@@ -192,5 +221,10 @@ def validate(template: ParsedTemplate) -> list[str]:
         (node for node in template.nodes if isinstance(node, GalleryNode)), start=1
     ):
         _validate_gallery(gal_idx, gal, errors)
+
+    for sec_idx, sec in enumerate(
+        (node for node in template.nodes if isinstance(node, SectionNode)), start=1
+    ):
+        _validate_section(sec_idx, sec, errors)
 
     return errors

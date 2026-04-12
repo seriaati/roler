@@ -56,9 +56,22 @@ class GalleryNode:
 
 
 @dataclass
+class ThumbnailNode:
+    url: str
+    description: str | None = None
+    spoiler: bool = False
+
+
+@dataclass
+class SectionNode:
+    children: list[TextNode]
+    accessory: ThumbnailNode | ButtonNode
+
+
+@dataclass
 class ParsedTemplate:
-    nodes: list[TextNode | ActionRowGroup | SeparatorNode | ImageNode | GalleryNode] = field(
-        default_factory=list
-    )
+    nodes: list[
+        TextNode | ActionRowGroup | SeparatorNode | ImageNode | GalleryNode | SectionNode
+    ] = field(default_factory=list)
     webhook: WebhookConfig = field(default_factory=WebhookConfig)
     template_id: str | None = None
