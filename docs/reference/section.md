@@ -54,7 +54,7 @@ Pick your color role
 
 | Constraint | Value |
 |---|---|
-| Text children per section | 1 – 3 |
+| Text children per section | 1 - 3 |
 | Accessories per section | exactly 1 |
 | Thumbnail description length | ≤ 256 characters |
 

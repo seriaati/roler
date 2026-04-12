@@ -14,7 +14,7 @@ Both attributes are optional - omit either to keep the bot's default name or ava
 
 | Attribute | Required | Description |
 |---|---|---|
-| `name` | ❌ | Display name shown on the panel message (1–80 characters) |
+| `name` | ❌ | Display name shown on the panel message (1-80 characters) |
 | `avatar` | ❌ | Avatar URL shown on the panel message (must be `http://` or `https://`) |
 
 ## Behavior

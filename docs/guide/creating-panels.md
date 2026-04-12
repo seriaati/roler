@@ -13,7 +13,7 @@ A template is composed of:
 | **`[separator]`** | A visual divider (or use `---`) |
 | **`[image]`** | A single image |
 | **`[gallery]`** | A block of multiple images |
-| **`[section]`** | Groups 1–3 text lines with a thumbnail or button accessory |
+| **`[section]`** | Groups 1-3 text lines with a thumbnail or button accessory |
 | **`[webhook]`** | Sets the poster identity (not rendered in the panel) |
 
 See the [Reference](../reference/button.md) section for full syntax on each tag.

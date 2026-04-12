@@ -17,7 +17,7 @@ Place this tag at the **top of a message** to mark it as a reusable template def
 ## ID Constraints
 
 - Alphanumeric characters, hyphens (`-`), and underscores (`_`) only
-- Length: 1–64 characters
+- Length: 1-64 characters
 - Scoped per-guild - the same ID can exist in different servers without conflict
 
 ## Placement
