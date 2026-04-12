@@ -35,6 +35,7 @@ Pick your color role
 ## Section Rules
 
 - Non-tag, non-empty lines inside `[section]...[/section]` become text children (max 3).
+- Text grouping follows the same rules as top-level text — see [Text Display](text.md) for details.
 - The last `[thumbnail]` or `[button]` found inside the block becomes the accessory.
 - A section must have exactly 1 accessory.
 

@@ -51,6 +51,7 @@ nav:
       - Creating Panels: guide/creating-panels.md
       - Reusable Templates: guide/reusable-templates.md
   - Reference:
+      - Text: reference/text.md
       - Button: reference/button.md
       - Separator: reference/separator.md
       - Image: reference/image.md

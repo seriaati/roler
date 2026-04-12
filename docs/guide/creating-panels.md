@@ -8,7 +8,7 @@ A template is composed of:
 
 | Node type | Description |
 |---|---|
-| **Text lines** | Rendered as panel description (supports Discord markdown) |
+| **Text lines** | Rendered as TextDisplay components (supports Discord markdown) — see [Text](../reference/text.md) for grouping rules |
 | **`[button]`** | A clickable role button |
 | **`[separator]`** | A visual divider (or use `---`) |
 | **`[image]`** | A single image |
@@ -80,6 +80,7 @@ The bot removes the panel message and cleans up its database record.
 
 ## Reference
 
+- [Text](../reference/text.md) - text display grouping and newline behavior
 - [Button](../reference/button.md) - full attribute table, modes, emojis, URL buttons, rows
 - [Separator](../reference/separator.md) - size and visibility options
 - [Image](../reference/image.md) - single image display
