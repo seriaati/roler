@@ -77,7 +77,7 @@ Add `disabled=true` to render a button as greyed out and non-interactive:
 [button role=1234567890 disabled=true]Coming Soon[/button]
 ```
 
-Disabled buttons are **exempt from all uniqueness rules** — multiple disabled buttons can share the same `role=`, `template=`, or label without conflict. Only enabled buttons are tracked for uniqueness.
+Disabled buttons are **exempt from all uniqueness rules** - multiple disabled buttons can share the same `role=`, `template=`, or label without conflict. Only enabled buttons are tracked for uniqueness.
 
 This makes disabled buttons useful for category prefixes, row headers, or "coming soon" placeholders:
 

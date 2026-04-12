@@ -8,7 +8,7 @@ A template is composed of:
 
 | Node type | Description |
 |---|---|
-| **Text lines** | Rendered as TextDisplay components (supports Discord markdown) — see [Text](../reference/text.md) for grouping rules |
+| **Text lines** | Rendered as TextDisplay components (supports Discord markdown) - see [Text](../reference/text.md) for grouping rules |
 | **`[button]`** | A clickable role button |
 | **`[separator]`** | A visual divider (or use `---`) |
 | **`[image]`** | A single image |

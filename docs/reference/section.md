@@ -1,6 +1,6 @@
 # Section
 
-A `[section]` groups up to 3 text lines with a single **accessory** — either a [`[thumbnail]`](#thumbnail-accessory) or a [`[button]`](button.md).
+A `[section]` groups up to 3 text lines with a single **accessory** - either a [`[thumbnail]`](#thumbnail-accessory) or a [`[button]`](button.md).
 
 ## Syntax
 
@@ -35,13 +35,13 @@ Pick your color role
 ## Section Rules
 
 - Non-tag, non-empty lines inside `[section]...[/section]` become text children (max 3).
-- Text grouping follows the same rules as top-level text — see [Text Display](text.md) for details.
+- Text grouping follows the same rules as top-level text - see [Text Display](text.md) for details.
 - The last `[thumbnail]` or `[button]` found inside the block becomes the accessory.
 - A section must have exactly 1 accessory.
 
 ## Thumbnail Accessory
 
-`[thumbnail]` can only appear as a section accessory — it cannot be used outside a `[section]` block.
+`[thumbnail]` can only appear as a section accessory - it cannot be used outside a `[section]` block.
 
 ### Thumbnail Attributes
 
