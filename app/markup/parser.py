@@ -100,18 +100,29 @@ def _parse_thumbnail(attrs_str: str) -> ThumbnailNode:
 def _parse_section(block: str) -> SectionNode:
     children: list[TextNode] = []
     accessory: ThumbnailNode | ButtonNode | None = None
+    current_text_lines: list[str] = []
 
-    for line in block.splitlines():
-        stripped = line.strip()
-        if not stripped:
-            continue
-        line_lower = stripped.lower()
-        if thumb_m := _THUMBNAIL_TAG_RE.search(stripped):
-            accessory = _parse_thumbnail(thumb_m.group("attrs"))
-        elif btn_m := _BUTTON_TAG_RE.search(stripped):
-            accessory = _parse_button(btn_m.group("attrs"), btn_m.group("label"))
-        elif not line_lower.startswith("["):
-            children.append(TextNode(content=stripped))
+    def flush_text() -> None:
+        if current_text_lines:
+            children.append(TextNode(content="\n".join(current_text_lines)))
+            current_text_lines.clear()
+
+    for para in re.split(r"\n{2,}", block):
+        para_lines = para.splitlines()
+        for line in para_lines:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            line_lower = stripped.lower()
+            if thumb_m := _THUMBNAIL_TAG_RE.search(stripped):
+                flush_text()
+                accessory = _parse_thumbnail(thumb_m.group("attrs"))
+            elif btn_m := _BUTTON_TAG_RE.search(stripped):
+                flush_text()
+                accessory = _parse_button(btn_m.group("attrs"), btn_m.group("label"))
+            elif not line_lower.startswith("["):
+                current_text_lines.append(stripped)
+        flush_text()
 
     if accessory is None:
         accessory = ThumbnailNode(url="")
