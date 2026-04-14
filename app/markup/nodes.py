@@ -75,3 +75,4 @@ class ParsedTemplate:
     ] = field(default_factory=list)
     webhook: WebhookConfig = field(default_factory=WebhookConfig)
     template_id: str | None = None
+    stateful: bool = False

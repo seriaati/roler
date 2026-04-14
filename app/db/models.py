@@ -34,6 +34,7 @@ class PanelTemplate(Model):
     source_channel_id = fields.BigIntField()
     source_message_id = fields.BigIntField(unique=True)
     content = fields.TextField()
+    stateful = fields.BooleanField(default=False)
     created_by = fields.BigIntField()
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)

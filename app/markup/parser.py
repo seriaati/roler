@@ -27,9 +27,7 @@ _BUTTON_TAG_RE = re.compile(
 )
 _SEPARATOR_TAG_RE = re.compile(rf"\[separator(?P<attrs>{_ATTR_PATTERN})\s*\]", re.IGNORECASE)
 _WEBHOOK_TAG_RE = re.compile(rf"\[webhook(?P<attrs>{_ATTR_PATTERN})\s*\]", re.IGNORECASE)
-TEMPLATE_TAG_RE = re.compile(
-    r'\[template\s+id=(?:"(?P<id_q>[^"]*)"|(?P<id_u>\S+))\s*\]', re.IGNORECASE
-)
+TEMPLATE_TAG_RE = re.compile(r"\[template(?P<attrs>" + _ATTR_PATTERN + r")\s*\]", re.IGNORECASE)
 _IMAGE_TAG_RE = re.compile(rf"\[image(?P<attrs>{_ATTR_PATTERN})\s*\]", re.IGNORECASE)
 _GALLERY_OPEN_RE = re.compile(r"\[gallery\s*\]", re.IGNORECASE)
 _GALLERY_CLOSE_RE = re.compile(r"\[/gallery\]", re.IGNORECASE)
@@ -258,18 +256,20 @@ def _extract_webhook_config(source: str) -> tuple[str, WebhookConfig]:
     return cleaned, webhook
 
 
-def _extract_template_id(source: str) -> tuple[str, str | None]:
+def _extract_template_meta(source: str) -> tuple[str, str | None, bool]:
     m = TEMPLATE_TAG_RE.search(source)
     if not m:
-        return source, None
-    template_id = m.group("id_q") or m.group("id_u")
+        return source, None, False
+    attrs = _parse_attrs(m.group("attrs"))
+    template_id = attrs.get("id") or None
+    stateful = attrs.get("stateful", "false").lower() == "true"
     cleaned = TEMPLATE_TAG_RE.sub("", source, count=1).strip()
-    return cleaned, template_id
+    return cleaned, template_id, stateful
 
 
 def parse_template(source: str) -> ParsedTemplate:
     source = _extract_code_blocks(source)
-    source, template_id = _extract_template_id(source)
+    source, template_id, stateful = _extract_template_meta(source)
     source, webhook = _extract_webhook_config(source)
     source, galleries = _extract_galleries(source)
     source, sections = _extract_sections(source)
@@ -302,4 +302,4 @@ def parse_template(source: str) -> ParsedTemplate:
         else:
             nodes.append(TextNode(content=stripped))
 
-    return ParsedTemplate(nodes=nodes, webhook=webhook, template_id=template_id)
+    return ParsedTemplate(nodes=nodes, webhook=webhook, template_id=template_id, stateful=stateful)

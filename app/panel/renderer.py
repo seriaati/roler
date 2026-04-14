@@ -41,19 +41,49 @@ def _parse_emoji(emoji_str: str) -> discord.PartialEmoji | str:
     return emoji_str
 
 
-def _resolve_custom_id(btn: ButtonNode, noop_counter: list[int]) -> str:
+def _resolve_custom_id(
+    btn: ButtonNode, noop_counter: list[int], stateful: bool = False, template_id: str | None = None
+) -> str:
     if btn.disabled:
         custom_id = f"noop:{noop_counter[0]}"
         noop_counter[0] += 1
         return custom_id
     if btn.template_ref is not None:
         return f"tpl:{btn.template_ref}"
+    if stateful and template_id is not None:
+        if btn.role_id is not None:
+            return f"rp_s:{btn.mode}:{btn.role_id}:{template_id}"
+        return f"rp_s:{btn.mode}:name:{btn.label}:{template_id}"
     if btn.role_id is not None:
         return f"rp:{btn.mode}:{btn.role_id}"
     return f"rp:{btn.mode}:name:{btn.label}"
 
 
-def _build_section(node: SectionNode, noop_counter: list[int]) -> discord.ui.Section:
+def _resolve_stateful_style(btn: ButtonNode, member: discord.Member) -> discord.ButtonStyle:
+    if btn.role_id is not None:
+        has_role = any(r.id == btn.role_id for r in member.roles)
+    elif btn.label is not None:
+        has_role = any(r.name == btn.label for r in member.roles)
+    else:
+        has_role = False
+    return discord.ButtonStyle.blurple if has_role else discord.ButtonStyle.grey
+
+
+def _button_style(
+    btn: ButtonNode, stateful: bool, member: discord.Member | None
+) -> discord.ButtonStyle:
+    if stateful and member is not None and not btn.disabled and btn.template_ref is None:
+        return _resolve_stateful_style(btn, member)
+    return _COLOR_MAP.get(btn.color, discord.ButtonStyle.blurple)
+
+
+def _build_section(
+    node: SectionNode,
+    noop_counter: list[int],
+    stateful: bool = False,
+    member: discord.Member | None = None,
+    template_id: str | None = None,
+) -> discord.ui.Section:
     text_displays = [discord.ui.TextDisplay(child.content) for child in node.children]
     if isinstance(node.accessory, ThumbnailNode):
         accessory: discord.ui.Thumbnail | discord.ui.Button = discord.ui.Thumbnail(
@@ -74,16 +104,22 @@ def _build_section(node: SectionNode, noop_counter: list[int]) -> discord.ui.Sec
             )
         else:
             accessory = discord.ui.Button(
-                style=_COLOR_MAP.get(btn.color, discord.ButtonStyle.blurple),
+                style=_button_style(btn, stateful, member),
                 label=btn.label,
                 emoji=emoji,
-                custom_id=_resolve_custom_id(btn, noop_counter),
+                custom_id=_resolve_custom_id(btn, noop_counter, stateful, template_id),
                 disabled=btn.disabled,
             )
     return discord.ui.Section(*text_displays, accessory=accessory)
 
 
-def _build_action_row(node: ActionRowGroup, noop_counter: list[int]) -> discord.ui.ActionRow:
+def _build_action_row(
+    node: ActionRowGroup,
+    noop_counter: list[int],
+    stateful: bool = False,
+    member: discord.Member | None = None,
+    template_id: str | None = None,
+) -> discord.ui.ActionRow:
     row = discord.ui.ActionRow()
     for btn in node.buttons:
         emoji = _parse_emoji(btn.emoji) if btn.emoji else None
@@ -97,19 +133,25 @@ def _build_action_row(node: ActionRowGroup, noop_counter: list[int]) -> discord.
             )
         else:
             button = discord.ui.Button(
-                style=_COLOR_MAP.get(btn.color, discord.ButtonStyle.blurple),
+                style=_button_style(btn, stateful, member),
                 label=btn.label,
                 emoji=emoji,
-                custom_id=_resolve_custom_id(btn, noop_counter),
+                custom_id=_resolve_custom_id(btn, noop_counter, stateful, template_id),
                 disabled=btn.disabled,
             )
         row.add_item(button)
     return row
 
 
-def render(template: ParsedTemplate) -> discord.ui.LayoutView:
+def render(
+    template: ParsedTemplate,
+    stateful: bool = False,
+    member: discord.Member | None = None,
+    template_id: str | None = None,
+) -> discord.ui.LayoutView:
     view = discord.ui.LayoutView()
     noop_counter = [0]
+    resolved_template_id = (template_id or template.template_id) if stateful else None
 
     for node in template.nodes:
         if isinstance(node, TextNode):
@@ -130,8 +172,12 @@ def render(template: ParsedTemplate) -> discord.ui.LayoutView:
             ]
             view.add_item(discord.ui.MediaGallery(*items))
         elif isinstance(node, SectionNode):
-            view.add_item(_build_section(node, noop_counter))
+            view.add_item(
+                _build_section(node, noop_counter, stateful, member, resolved_template_id)
+            )
         else:
-            view.add_item(_build_action_row(node, noop_counter))
+            view.add_item(
+                _build_action_row(node, noop_counter, stateful, member, resolved_template_id)
+            )
 
     return view

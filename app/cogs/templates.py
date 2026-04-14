@@ -102,7 +102,10 @@ class TemplatesCog(commands.Cog):
         if existing is not None:
             existing.source_channel_id = message.channel.id
             existing.content = stripped_content
-            await existing.save(update_fields=["source_channel_id", "content", "updated_at"])
+            existing.stateful = parsed.stateful
+            await existing.save(
+                update_fields=["source_channel_id", "content", "stateful", "updated_at"]
+            )
         else:
             await PanelTemplate.create(
                 guild_id=message.guild.id,
@@ -110,6 +113,7 @@ class TemplatesCog(commands.Cog):
                 source_channel_id=message.channel.id,
                 source_message_id=message.id,
                 content=stripped_content,
+                stateful=parsed.stateful,
                 created_by=interaction.user.id,
             )
 
@@ -168,7 +172,8 @@ class TemplatesCog(commands.Cog):
 
         record.template_id = parsed.template_id
         record.content = _strip_template_tag(message.content)
-        await record.save(update_fields=["template_id", "content", "updated_at"])
+        record.stateful = parsed.stateful
+        await record.save(update_fields=["template_id", "content", "stateful", "updated_at"])
         logger.info(f"Updated template {record.template_id!r} from message {payload.message_id}")
 
 
