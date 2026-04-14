@@ -76,3 +76,6 @@ class ParsedTemplate:
     webhook: WebhookConfig = field(default_factory=WebhookConfig)
     template_id: str | None = None
     stateful: bool = False
+    on_color: str = "blurple"
+    off_color: str = "grey"
+    replace: bool = False

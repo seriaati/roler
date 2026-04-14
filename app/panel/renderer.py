@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import discord
@@ -32,6 +33,15 @@ _SPACING_MAP: dict[str, discord.SeparatorSpacing] = {
 _CUSTOM_EMOJI_RE = re.compile(r"<(?P<animated>a)?:(?P<name>[^:]+):(?P<id>\d+)>")
 
 
+@dataclass
+class _RenderCtx:
+    stateful: bool = False
+    member: discord.Member | None = None
+    template_id: str | None = None
+    on_color: str = "blurple"
+    off_color: str = "grey"
+
+
 def _parse_emoji(emoji_str: str) -> discord.PartialEmoji | str:
     m = _CUSTOM_EMOJI_RE.fullmatch(emoji_str)
     if m:
@@ -41,48 +51,42 @@ def _parse_emoji(emoji_str: str) -> discord.PartialEmoji | str:
     return emoji_str
 
 
-def _resolve_custom_id(
-    btn: ButtonNode, noop_counter: list[int], stateful: bool = False, template_id: str | None = None
-) -> str:
-    if btn.disabled:
-        custom_id = f"noop:{noop_counter[0]}"
-        noop_counter[0] += 1
-        return custom_id
-    if btn.template_ref is not None:
-        return f"tpl:{btn.template_ref}"
-    if stateful and template_id is not None:
-        if btn.role_id is not None:
-            return f"rp_s:{btn.mode}:{btn.role_id}:{template_id}"
-        return f"rp_s:{btn.mode}:name:{btn.label}:{template_id}"
-    if btn.role_id is not None:
-        return f"rp:{btn.mode}:{btn.role_id}"
-    return f"rp:{btn.mode}:name:{btn.label}"
-
-
-def _resolve_stateful_style(btn: ButtonNode, member: discord.Member) -> discord.ButtonStyle:
+def _resolve_stateful_style(
+    btn: ButtonNode, member: discord.Member, on_color: str, off_color: str
+) -> discord.ButtonStyle:
     if btn.role_id is not None:
         has_role = any(r.id == btn.role_id for r in member.roles)
     elif btn.label is not None:
         has_role = any(r.name == btn.label for r in member.roles)
     else:
         has_role = False
-    return discord.ButtonStyle.blurple if has_role else discord.ButtonStyle.grey
+    return _COLOR_MAP[on_color] if has_role else _COLOR_MAP[off_color]
 
 
-def _button_style(
-    btn: ButtonNode, stateful: bool, member: discord.Member | None
-) -> discord.ButtonStyle:
-    if stateful and member is not None and not btn.disabled and btn.template_ref is None:
-        return _resolve_stateful_style(btn, member)
+def _button_style(btn: ButtonNode, ctx: _RenderCtx) -> discord.ButtonStyle:
+    if ctx.stateful and ctx.member is not None and not btn.disabled and btn.template_ref is None:
+        return _resolve_stateful_style(btn, ctx.member, ctx.on_color, ctx.off_color)
     return _COLOR_MAP.get(btn.color, discord.ButtonStyle.blurple)
 
 
+def _resolve_custom_id(btn: ButtonNode, noop_counter: list[int], ctx: _RenderCtx) -> str:
+    if btn.disabled:
+        custom_id = f"noop:{noop_counter[0]}"
+        noop_counter[0] += 1
+        return custom_id
+    if btn.template_ref is not None:
+        return f"tpl:{btn.template_ref}"
+    if ctx.stateful and ctx.template_id is not None:
+        if btn.role_id is not None:
+            return f"rp_s:{btn.mode}:{btn.role_id}:{ctx.template_id}"
+        return f"rp_s:{btn.mode}:name:{btn.label}:{ctx.template_id}"
+    if btn.role_id is not None:
+        return f"rp:{btn.mode}:{btn.role_id}"
+    return f"rp:{btn.mode}:name:{btn.label}"
+
+
 def _build_section(
-    node: SectionNode,
-    noop_counter: list[int],
-    stateful: bool = False,
-    member: discord.Member | None = None,
-    template_id: str | None = None,
+    node: SectionNode, noop_counter: list[int], ctx: _RenderCtx
 ) -> discord.ui.Section:
     text_displays = [discord.ui.TextDisplay(child.content) for child in node.children]
     if isinstance(node.accessory, ThumbnailNode):
@@ -104,21 +108,17 @@ def _build_section(
             )
         else:
             accessory = discord.ui.Button(
-                style=_button_style(btn, stateful, member),
+                style=_button_style(btn, ctx),
                 label=btn.label,
                 emoji=emoji,
-                custom_id=_resolve_custom_id(btn, noop_counter, stateful, template_id),
+                custom_id=_resolve_custom_id(btn, noop_counter, ctx),
                 disabled=btn.disabled,
             )
     return discord.ui.Section(*text_displays, accessory=accessory)
 
 
 def _build_action_row(
-    node: ActionRowGroup,
-    noop_counter: list[int],
-    stateful: bool = False,
-    member: discord.Member | None = None,
-    template_id: str | None = None,
+    node: ActionRowGroup, noop_counter: list[int], ctx: _RenderCtx
 ) -> discord.ui.ActionRow:
     row = discord.ui.ActionRow()
     for btn in node.buttons:
@@ -133,10 +133,10 @@ def _build_action_row(
             )
         else:
             button = discord.ui.Button(
-                style=_button_style(btn, stateful, member),
+                style=_button_style(btn, ctx),
                 label=btn.label,
                 emoji=emoji,
-                custom_id=_resolve_custom_id(btn, noop_counter, stateful, template_id),
+                custom_id=_resolve_custom_id(btn, noop_counter, ctx),
                 disabled=btn.disabled,
             )
         row.add_item(button)
@@ -151,7 +151,13 @@ def render(
 ) -> discord.ui.LayoutView:
     view = discord.ui.LayoutView()
     noop_counter = [0]
-    resolved_template_id = (template_id or template.template_id) if stateful else None
+    ctx = _RenderCtx(
+        stateful=stateful,
+        member=member,
+        template_id=(template_id or template.template_id) if stateful else None,
+        on_color=template.on_color,
+        off_color=template.off_color,
+    )
 
     for node in template.nodes:
         if isinstance(node, TextNode):
@@ -172,12 +178,8 @@ def render(
             ]
             view.add_item(discord.ui.MediaGallery(*items))
         elif isinstance(node, SectionNode):
-            view.add_item(
-                _build_section(node, noop_counter, stateful, member, resolved_template_id)
-            )
+            view.add_item(_build_section(node, noop_counter, ctx))
         else:
-            view.add_item(
-                _build_action_row(node, noop_counter, stateful, member, resolved_template_id)
-            )
+            view.add_item(_build_action_row(node, noop_counter, ctx))
 
     return view

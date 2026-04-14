@@ -256,20 +256,31 @@ def _extract_webhook_config(source: str) -> tuple[str, WebhookConfig]:
     return cleaned, webhook
 
 
-def _extract_template_meta(source: str) -> tuple[str, str | None, bool]:
+def _extract_template_meta(source: str) -> tuple[str, str | None, bool, str, str, bool]:
     m = TEMPLATE_TAG_RE.search(source)
     if not m:
-        return source, None, False
+        return source, None, False, "blurple", "grey", False
     attrs = _parse_attrs(m.group("attrs"))
     template_id = attrs.get("id") or None
     stateful = attrs.get("stateful", "false").lower() == "true"
+
+    on_color = attrs.get("on", "blurple").lower()
+    if on_color not in _VALID_COLORS:
+        on_color = "blurple"
+
+    off_color = attrs.get("off", "grey").lower()
+    if off_color not in _VALID_COLORS:
+        off_color = "grey"
+
+    replace = attrs.get("replace", "false").lower() == "true"
+
     cleaned = TEMPLATE_TAG_RE.sub("", source, count=1).strip()
-    return cleaned, template_id, stateful
+    return cleaned, template_id, stateful, on_color, off_color, replace
 
 
 def parse_template(source: str) -> ParsedTemplate:
     source = _extract_code_blocks(source)
-    source, template_id, stateful = _extract_template_meta(source)
+    source, template_id, stateful, on_color, off_color, replace = _extract_template_meta(source)
     source, webhook = _extract_webhook_config(source)
     source, galleries = _extract_galleries(source)
     source, sections = _extract_sections(source)
@@ -302,4 +313,12 @@ def parse_template(source: str) -> ParsedTemplate:
         else:
             nodes.append(TextNode(content=stripped))
 
-    return ParsedTemplate(nodes=nodes, webhook=webhook, template_id=template_id, stateful=stateful)
+    return ParsedTemplate(
+        nodes=nodes,
+        webhook=webhook,
+        template_id=template_id,
+        stateful=stateful,
+        on_color=on_color,
+        off_color=off_color,
+        replace=replace,
+    )

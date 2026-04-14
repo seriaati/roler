@@ -10,7 +10,6 @@ from loguru import logger
 
 from app.db.models import PanelTemplate
 from app.markup import parse_template
-from app.markup.parser import TEMPLATE_TAG_RE
 from app.markup.validator import validate
 
 if TYPE_CHECKING:
@@ -97,11 +96,9 @@ class TemplatesCog(commands.Cog):
             )
             return
 
-        stripped_content = _strip_template_tag(message.content)
-
         if existing is not None:
             existing.source_channel_id = message.channel.id
-            existing.content = stripped_content
+            existing.content = message.content
             existing.stateful = parsed.stateful
             await existing.save(
                 update_fields=["source_channel_id", "content", "stateful", "updated_at"]
@@ -112,7 +109,7 @@ class TemplatesCog(commands.Cog):
                 template_id=parsed.template_id,
                 source_channel_id=message.channel.id,
                 source_message_id=message.id,
-                content=stripped_content,
+                content=message.content,
                 stateful=parsed.stateful,
                 created_by=interaction.user.id,
             )
@@ -171,14 +168,10 @@ class TemplatesCog(commands.Cog):
             return
 
         record.template_id = parsed.template_id
-        record.content = _strip_template_tag(message.content)
+        record.content = message.content
         record.stateful = parsed.stateful
         await record.save(update_fields=["template_id", "content", "stateful", "updated_at"])
         logger.info(f"Updated template {record.template_id!r} from message {payload.message_id}")
-
-
-def _strip_template_tag(source: str) -> str:
-    return TEMPLATE_TAG_RE.sub("", source, count=1).strip()
 
 
 async def setup(bot: commands.Bot) -> None:

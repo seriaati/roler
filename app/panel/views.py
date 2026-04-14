@@ -284,4 +284,8 @@ class TemplateButton(
         view = render(
             parsed, stateful=record.stateful, member=member, template_id=record.template_id
         )
-        await i.followup.send(view=view, ephemeral=True)
+
+        if parsed.replace:
+            await i.edit_original_response(view=view)
+        else:
+            await i.followup.send(view=view, ephemeral=True)
