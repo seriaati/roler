@@ -44,6 +44,7 @@ You can customize these colors using the `on` and `off` attributes:
 ```
 
 With this configuration:
+
 - **User has the role** → button appears **green**
 - **User does not have the role** → button appears **red**
 
@@ -69,6 +70,7 @@ In this example, clicking the Settings button edits the existing ephemeral messa
 This is useful for building multi-page menus where navigating between templates feels seamless.
 
 **Notes:**
+
 - `replace` has no effect when the template is opened as the first response (e.g. directly from a panel button), since there is no existing ephemeral message to replace at that point.
 - Each template controls its own replace behavior independently.
 
