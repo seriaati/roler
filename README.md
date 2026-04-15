@@ -4,11 +4,13 @@
 
 **Discord bot for creating advanced and descriptive role panels easily.**
 
+[>> Official Website <<](https://roler.seria.moe)
+
 Roler lets server admins write a simple markup template in any message, then turn it into a persistent role panel with clickable buttons; members click the buttons to get (or lose) a role.
 
 Roler is easy and powerful at the same time. You can create basic role panels in seconds, or take advantage of the full customizability and reusable template system to create complex interactive experiences. See below for more info.
 
-[>> Invite Roler to your server <<](https://discord.com/oauth2/authorize?client_id=1488089368924000367)
+[>> Invite Roler <<](https://discord.com/oauth2/authorize?client_id=1488089368924000367)
 
 ---
 
@@ -30,7 +32,7 @@ Full usage guides, syntax reference, and validation rules are in the [documentat
 
 ## Self-Hosting
 
-Requires Python 3.14+ and PostgreSQL. See [docs/self-hosting.md](https://gh.seria.moe/roler/self-hosting/) for setup instructions.
+Requires Python 3.14+ and PostgreSQL. See [docs](https://gh.seria.moe/roler/self-hosting/) for setup instructions.
 
 ## Acknowledgements
 
