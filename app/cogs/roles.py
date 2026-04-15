@@ -7,10 +7,12 @@ from discord import app_commands
 from discord.ext import commands
 from loguru import logger
 
+from app.constants import WEBHOOK_SPONSOR_MESSAGE
 from app.db.models import RolePanel
 from app.markup import parse_template
 from app.markup.validator import validate
 from app.panel.renderer import render
+from app.utils.sponsors import is_sponsor
 
 if TYPE_CHECKING:
     from app.markup.nodes import ParsedTemplate
@@ -195,6 +197,9 @@ async def _create_panel(
         return
 
     if template.webhook.present:
+        if not await is_sponsor(interaction.user.id):
+            await interaction.response.send_message(WEBHOOK_SPONSOR_MESSAGE, ephemeral=True)
+            return
         ok = await _send_panel_via_webhook(
             interaction, source_message, target_channel, template, bot_user
         )
@@ -331,6 +336,14 @@ class RolesCog(commands.Cog):
 
         was_webhook = bool(panel.webhook_id and panel.webhook_token)
         wants_webhook = template.webhook.present
+
+        if wants_webhook and not await is_sponsor(panel.created_by):
+            try:
+                creator = await self.bot.fetch_user(panel.created_by)
+                await creator.send(WEBHOOK_SPONSOR_MESSAGE)
+            except Exception as e:
+                logger.warning(f"Could not notify panel creator of sponsor requirement: {e}")
+            return
 
         if was_webhook and wants_webhook:
             await self._edit_via_webhook(panel, view, template, target_channel, bot_user)

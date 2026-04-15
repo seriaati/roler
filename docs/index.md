@@ -17,7 +17,7 @@ Roler is easy and powerful at the same time. You can create basic role panels in
 ## Why Roler?
 
 - **Components v2** - Create beautiful role panels that look far more superior than Embeds. Mix markdown texts, emojis, buttons, and separators in any order.
-- **Customizability** - Change button colors, emojis, and even webhook identities for posting panels.
+- **Customizability** - Change button colors, emojis, and even webhook identities for posting panels (webhook identity is a [sponsor perk](reference/webhook.md)).
 - **Easy edits** - Do inline edits for existing role panels without having to reconstruct everything from scratch.
 - **Version control** - Keep old versions of your panel templates in message history and revert to them whenever you want.
 - **Portability** - Move panels around different channels without having to redo the setup.

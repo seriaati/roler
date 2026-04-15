@@ -1,5 +1,11 @@
 # Webhook
 
+!!! tip "💎 Sponsor Feature"
+    The `[webhook]` tag is a paid feature. To unlock it, [donate here](https://link.seria.moe/donate) and then contact [Seria on Discord](https://discord.com/users/410036441129943050).
+
+!!! note "Normal panels only"
+    The `[webhook]` tag only works in normal role panels. It cannot be used in reusable templates, since templates render as ephemeral messages which can only be sent as the bot.
+
 ## Syntax
 
 ```
