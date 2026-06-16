@@ -61,6 +61,8 @@ nav:
       - Template Tag: reference/template-tag.md
   - Validation Rules: validation.md
   - Self-Hosting: self-hosting.md
+  - Privacy Policy: privacy.md
+  - Terms of Service: terms.md
 
 plugins:
   - search
