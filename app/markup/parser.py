@@ -19,8 +19,8 @@ from app.markup.nodes import (
 _CODE_BLOCK_RE = re.compile(r"```[^\n]*\n?(.*?)```", re.DOTALL)
 _FENCE_LINE_RE = re.compile(r"^```[^\n]*$", re.MULTILINE)
 
-_ATTR_PATTERN = r'(?:\s+[a-z_]+=(?:"[^"]*"|\S+))*'
-_ATTR_RE = re.compile(r'([a-z_]+)=(?:"([^"]*)"|(\S+))', re.IGNORECASE)
+_ATTR_PATTERN = r'(?:\s+[a-z_]+=(?:"[^"]*"|[^\s\]]+))*'
+_ATTR_RE = re.compile(r'([a-z_]+)=(?:"([^"]*)"|([^\s\]]+))', re.IGNORECASE)
 
 _BUTTON_TAG_RE = re.compile(
     rf"\[button(?P<attrs>{_ATTR_PATTERN})\s*\](?P<label>[^\[]*)\[/button\]", re.IGNORECASE
