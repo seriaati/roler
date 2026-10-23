@@ -24,7 +24,7 @@ The bot validates your template before creating or updating a panel. If any rule
 ## Template Button Rules
 
 - A template button (`template=`) cannot also have a `role=` attribute (mutually exclusive)
-- A template button must have a label
+- A template button must have a label or an `emoji` (or both)
 
 ## URL Button Rules
 

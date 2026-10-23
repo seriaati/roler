@@ -38,7 +38,7 @@ Welcome! Pick your roles below, or browse color roles.
 When a member clicks **🎨 Color Roles**, the bot sends them an ephemeral message with the fully rendered `color-roles` template, including all its functional role buttons.
 
 !!! note
-    A template button **must** have a label and **cannot** also have a `role=` attribute. See [Button reference](../reference/button.md) for details.
+    A template button **must** have a label or an emoji and **cannot** also have a `role=` attribute. See [Button reference](../reference/button.md) for details.
 
 ## Auto-Update on Edit
 

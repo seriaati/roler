@@ -46,8 +46,8 @@ def _validate_webhook(template: ParsedTemplate, errors: list[str]) -> None:
 def _validate_template_button(row_idx: int, btn: ButtonNode, errors: list[str]) -> None:
     if btn.role_id is not None:
         errors.append(f"Row {row_idx}: template button cannot also have a role= attribute")
-    if btn.label is None:
-        errors.append(f"Row {row_idx}: template button must have a label")
+    if btn.label is None and btn.emoji is None:
+        errors.append(f"Row {row_idx}: template button needs a label or emoji")
     if btn.template_ref and not _TEMPLATE_ID_RE.match(btn.template_ref):
         errors.append(
             f"Row {row_idx}: template ID {btn.template_ref!r} is invalid"
