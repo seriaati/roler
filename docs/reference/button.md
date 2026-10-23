@@ -50,6 +50,9 @@ emoji=<a:emoji_name:emoji_id>
 [button role=1475117545122959380 emoji=<a:dance:9876543210987654321>]Dance[/button]
 ```
 
+!!! warning "Inside code blocks"
+    Discord rewrites `<:name:id>` inside a code block to `:name:` when you send the message, which loses the emoji ID. Put a backslash in front to stop this: `emoji=\<:pepe:1234567890123456789>`. Roler strips the backslash when parsing.
+
 !!! note
     The bot must be in a server that has access to the emoji, or the emoji must be from a server the bot shares with the user.
 

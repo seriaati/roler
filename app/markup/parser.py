@@ -18,6 +18,8 @@ from app.markup.nodes import (
 
 _CODE_BLOCK_RE = re.compile(r"```[^\n]*\n?(.*?)```", re.DOTALL)
 _FENCE_LINE_RE = re.compile(r"^```[^\n]*$", re.MULTILINE)
+# Discord rewrites <:name:id> inside code blocks to :name:, so users escape it as \<:name:id>
+_ESCAPED_EMOJI_RE = re.compile(r"\\(<a?:[^:\s]+:\d+>)")
 
 _ATTR_PATTERN = r'(?:\s+[a-z_]+=(?:"[^"]*"|\S+))*'
 _ATTR_RE = re.compile(r'([a-z_]+)=(?:"([^"]*)"|(\S+))', re.IGNORECASE)
@@ -280,6 +282,7 @@ def _extract_template_meta(source: str) -> tuple[str, str | None, bool, str, str
 
 def parse_template(source: str) -> ParsedTemplate:
     source = _extract_code_blocks(source)
+    source = _ESCAPED_EMOJI_RE.sub(r"\1", source)
     source, template_id, stateful, on_color, off_color, replace = _extract_template_meta(source)
     source, webhook = _extract_webhook_config(source)
     source, galleries = _extract_galleries(source)
