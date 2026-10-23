@@ -173,6 +173,9 @@ def _process_mixed_block(
     stripped: str,
     result: list[TextNode | ActionRowGroup | SeparatorNode | ImageNode | GalleryNode | SectionNode],
 ) -> None:
+    # Each line is handled as a single element, so give these tags their own lines
+    for tag_re in (_SEPARATOR_TAG_RE, _IMAGE_TAG_RE):
+        stripped = tag_re.sub("\n\\g<0>\n", stripped)
     lines = stripped.splitlines()
     current_row_lines: list[str] = []
 
