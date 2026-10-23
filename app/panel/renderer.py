@@ -30,7 +30,9 @@ _SPACING_MAP: dict[str, discord.SeparatorSpacing] = {
     "large": discord.SeparatorSpacing.large,
 }
 
-_CUSTOM_EMOJI_RE = re.compile(r"<(?P<animated>a)?:(?P<name>[^:]+):(?P<id>\d+)>")
+# Brackets are optional: Discord rewrites <:name:id> to :name: in code blocks
+# when the sender can't use the emoji, so name:id and a:name:id are accepted too
+_CUSTOM_EMOJI_RE = re.compile(r"<?(?:(?P<animated>a)?:)?(?P<name>[^:<>]+):(?P<id>\d+)>?")
 
 
 @dataclass
