@@ -52,7 +52,7 @@ class ChannelPickerView(discord.ui.View):
 
     @discord.ui.select(
         cls=discord.ui.ChannelSelect,
-        channel_types=[discord.ChannelType.text],
+        channel_types=[discord.ChannelType.text, discord.ChannelType.news],
         placeholder="Select a channel to post the panel in…",
     )
     async def channel_select(
