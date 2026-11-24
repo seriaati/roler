@@ -7,6 +7,7 @@ WEBHOOK_SPONSOR_MESSAGE = (
     "Custom webhook identities (the `[webhook]` tag) require an active sponsorship.\n\n"
     "**To unlock:**\n"
     "1. [Donate here](<https://link.seria.moe/donate>)\n"
-    "2. Contact [Seria on Discord](<https://discord.com/users/410036441129943050>) to activate\n\n"
+    "2. Add [Seria's bot](<https://discord.com/oauth2/authorize?client_id=1556526314167468132>) to your account "
+    "or join the [Discord server](<https://link.seria.moe/hb-dc>), then use `/claim`\n\n"
     "Your panel will still work without the `[webhook]` tag, it'll just post as the bot."
 )
