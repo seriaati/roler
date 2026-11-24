@@ -28,7 +28,7 @@ Roler requires certain Discord permissions (such as Manage Roles, and optionally
 
 ## 5. Sponsor features
 
-Some features (such as custom webhook identities) require an active sponsorship. Sponsorship and access to such features are provided at our discretion. Non-sponsor functionality remains fully available without payment.
+Some features (such as custom webhook identities) require a sponsorship. Sponsorship and access to such features are provided at our discretion. Non-sponsor functionality remains fully available without payment.
 
 ## 6. Availability and changes
 
